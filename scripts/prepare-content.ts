@@ -13,6 +13,19 @@ import { createHighlighter } from "shiki";
 const SITE = "https://docs.devmoon.net";
 const repoRoot = resolve(import.meta.dir, "..");
 
+// Guard runtime: bun 1.2.x tidak bisa mem-parse kode minified React 19.3
+// (label `else a: if` → SyntaxError saat prerender). Cloudflare Pages memakai
+// image dengan bun 1.2.15 → set env BUN_VERSION=1.4.2 di sana.
+{
+  const [major = 0, minor = 0] = Bun.version.split(".").map((part) => Number(part));
+  if (major < 1 || (major === 1 && minor < 4)) {
+    throw new Error(
+      `[docs] butuh bun >= 1.4 (sekarang ${Bun.version}). ` +
+        "Di Cloudflare Pages set environment variable BUN_VERSION=1.4.2 (Production & Preview).",
+    );
+  }
+}
+
 /* ---------------------------------- util ---------------------------------- */
 
 function walk(dir: string): string[] {
