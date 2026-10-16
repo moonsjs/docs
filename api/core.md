@@ -38,6 +38,7 @@ Optional keys that produce production files and runtime behavior:
 - `hooks` — `onRequest`, `onResponse` (may return a replacement `Response`), `onError`.
 - `isr` — `{ storage? }`; a shared `PrerenderStorage` for prerendered files (multi-instance ISR; see the Vite page).
 - `logging` — `{ accessLog?, json?, redact? }`; structured runtime access logs (JSON by default, `moons dev` writes a CLI-managed `.moons/dev.log`), with `redact` listing query params whose values become `[redacted]`. Default: silent.
+- `trailingSlash` — `"never"` / `"always"`: **308 method-preserving redirects** to the canonical page URL (`/about/` → `/about` or `/about` → `/about/`), query preserved. Omitted = no redirects (previous behavior). Root, `/_moons/**` and dotted asset paths are exempt. Enforced at runtime (server + prerendered pages); on a static host without a server, configure the host/CDN instead.
 
 ```ts
 export default defineConfig({

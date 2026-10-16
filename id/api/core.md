@@ -38,6 +38,7 @@ Key opsional yang menghasilkan berkas produksi dan perilaku runtime:
 - `hooks` — `onRequest`, `onResponse` (boleh mengembalikan `Response` pengganti), `onError`.
 - `isr` — `{ storage? }`; `PrerenderStorage` bersama untuk file prerender (ISR multi-instance; lihat halaman Vite).
 - `logging` — `{ accessLog?, json?, redact? }`; log akses runtime terstruktur (JSON default; `moons dev` menulis `.moons/dev.log` terkelola CLI), `redact` = daftar query-param yang nilainya menjadi `[redacted]`. Default: senyap.
+- `trailingSlash` — `"never"` / `"always"`: **redirect 308 method-preserving** ke URL halaman kanonik (`/about/` → `/about` atau `/about` → `/about/`), query dipertahankan. Absen = tanpa redirect (perilaku lama). Root, `/_moons/**`, dan path aset ber-titik dikecualikan. Ditegakkan runtime (server + halaman prerender); pada static host tanpa server, atur di host/CDN.
 
 ```ts
 export default defineConfig({
