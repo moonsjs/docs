@@ -1,8 +1,8 @@
 # `@moonsjs/react`
 
-Hooks publik, `Link`, SSR render, dan hydration.
+Public hooks, `Link`, SSR render, and hydration.
 
-## Publik — `@moonsjs/react`
+## Public — `@moonsjs/react`
 
 ```ts
 function useLoaderData<T extends (...args: any) => any>(): Awaited<ReturnType<T>>;
@@ -21,19 +21,22 @@ interface RouteMeta { title?: string; description?: string; [key: string]: unkno
 interface RouteMap {}   // di-augmentasi .moons/routes.d.ts (typegen)
 ```
 
-- `useLoaderData<typeof loader>()` — data loader modul route yang sedang dirender
-  (page atau layout) dari provider terdekat.
-- `useParams<"/users/[id]">` — key route memakai bentuk file;
-  `ParamsFor<P>` presisi bila `.moons/routes.d.ts` sudah di-typegen,
-  fallback `Record<string, string>` bila RouteMap kosong.
-- `useRouteError` — error halaman `_error` (M3); `undefined` di luar konteks error.
+- `useLoaderData<typeof loader>()` — the loader data for the route module
+  currently being rendered (page or layout) from the nearest provider.
+- `useParams<"/users/[id]">` — route keys use the file form; `ParamsFor<P>` is
+  precise once `.moons/routes.d.ts` has been generated, falling back to
+  `Record<string, string>` when RouteMap is empty.
+- `useRouteError` — the `_error` page error (M3); `undefined` outside an error
+  context.
 - `Link`:
-  - `to` = key `RouteMap` gaya file (`/users/[id]`); `params` diisi sesuai key.
-  - Merender `<a href>`; klik kiri tanpa modifier → navigasi client-side;
- Ctrl/Cmd/Shift/middle/`target="_blank"` → perilaku browser.
-  - Catch-all: `params.rest` boleh berisi `a/b` (setiap segmen di-encode terpisah).
+  - `to` = a file-style `RouteMap` key (`/users/[id]`); `params` are filled in
+    according to the key.
+  - Renders `<a href>`; a left click without modifiers → client-side navigation;
+ Ctrl/Cmd/Shift/middle/`target="_blank"` → browser behavior.
+  - Catch-all: `params.rest` may contain `a/b` (each segment is encoded
+    separately).
 
-## Subpath internal
+## Internal subpaths
 
 ### `@moonsjs/react/client`
 
@@ -41,18 +44,18 @@ interface RouteMap {}   // di-augmentasi .moons/routes.d.ts (typegen)
 function hydrate(): Promise<void>;
 ```
 
-Dipanggil sekali dari `src/client/main.tsx`:
+Called once from `src/client/main.tsx`:
 
 ```tsx
 import { hydrate } from "@moonsjs/react/client";
 await hydrate();
 ```
 
-Membaca `<script id="__moons_data" type="application/x-moons">`,
-me-revive `SerializedError` bila ada, memuat modul route dari manifest client
-(`virtual:moons/client-entry`), `hydrateRoot` ke `#root`, lalu mendaftarkan
-navigasi SPA (fetch dokumen + swap `#root` + `pushState`, `popstate` didukung;
-fallback reload bila fetch gagal/non-200).
+Reads `<script id="__moons_data" type="application/x-moons">`, revives a
+`SerializedError` if present, loads route modules from the client manifest
+(`virtual:moons/client-entry`), calls `hydrateRoot` on `#root`, then registers
+SPA navigation (document fetch + `#root` swap + `pushState`; `popstate` is
+supported; falls back to a reload when the fetch fails or is non-200).
 
 ### `@moonsjs/react/ssr`
 
@@ -65,19 +68,20 @@ function renderToMarkup(
   error?: unknown,     // halaman _error (dev); RouteErrorProvider
 ): string;
 ```
-Dipakai `@moonsjs/vite/server`.
+Used by `@moonsjs/vite/server`.
 
 ### `@moonsjs/react/internal`
 
-`renderTree` (pohon identik server/client: `ParamsProvider` → layout root→leaf →
-page, masing-masing dengan `LoaderDataProvider`), provider
-(`ParamsProvider`, `LoaderDataProvider`, `RouteErrorProvider`), tipe
-`ClientRouteEntry`, `RouteModuleShape`, `LoadedRoute`. Dipakai runtime framework
-(virtual module & server handler), bukan aplikasi.
+`renderTree` (an identical server/client tree: `ParamsProvider` → layouts
+root→leaf → page, each with a `LoaderDataProvider`), providers
+(`ParamsProvider`, `LoaderDataProvider`, `RouteErrorProvider`), and the types
+`ClientRouteEntry`, `RouteModuleShape`, `LoadedRoute`. Used by the framework
+runtime (virtual modules & server handler), not by apps.
 
-## Kontrak hydration 
+## Hydration contract
 
-- Server merender markup + payload devalue; client harus menghasilkan pohon
-  identik. Ketidaksamaan → hydration error di console.
-- Tipe kaya (`Date`, `Map`, `Set`, `BigInt`, `undefined`, `NaN`) dijaga devalue;
-  payload di-escape aman HTML dan dibaca `JSON.parse` → `devalue.parse`.
+- The server renders markup + a devalue payload; the client must produce an
+  identical tree. Any mismatch → a hydration error in the console.
+- Rich types (`Date`, `Map`, `Set`, `BigInt`, `undefined`, `NaN`) survive thanks
+  to devalue; the payload is HTML-escaped and read via `JSON.parse` →
+  `devalue.parse`.

@@ -1,21 +1,21 @@
 # `@moonsjs/vite`
 
-Plugin build/dev + runtime server. Transform zero-trust hidup di
-`src/transform.ts` — lihat juga `../decisions/0002-m1-ssr.md` dan
+Build/dev plugin + server runtime. The zero-trust transform lives in
+`src/transform.ts` — see also `../decisions/0002-m1-ssr.md` and
 `../decisions/0003-m2-zero-trust.md`.
 
-Gate **paket server-only** juga hidup di `src/transform.ts` +
-`src/server-only.ts` (daftar bawaan `DEFAULT_SERVER_ONLY_PACKAGES`, marker
-`"moons": { "serverOnly": true }` di package.json, dan
-`security.serverOnlyPackages` dari config): import langsung/dinamis/re-export
-dari graph client → `E_FORBIDDEN_SERVER_IMPORT` (type-only dikecualikan);
-dijaga `scripts/m2/test-server-only-import.sh`.
+The **server-only package** gate also lives in `src/transform.ts` +
+`src/server-only.ts` (the built-in `DEFAULT_SERVER_ONLY_PACKAGES` list, the
+`"moons": { "serverOnly": true }` marker in package.json, and
+`security.serverOnlyPackages` from the config): direct/dynamic/re-export imports
+from the client graph → `E_FORBIDDEN_SERVER_IMPORT` (type-only imports are
+exempt); enforced by `scripts/m2/test-server-only-import.sh`.
 
-**A1 (dev)**: `createRequestHandler` menerima `payloadScan?: PayloadScanOptions`
-(hanya diisi runtime dev — `createDevApp(shell, payloadScan)`): peringatan
-`[moons] peringatan dev` sekali per label bila payload SSR memuat
-`leakTest.canary` atau nilai env mirip-rahasia (nama cocok
-SECRET/TOKEN/KEY/…, nilai ≥12 karakter). Production tidak memindai.
+**A1 (dev)**: `createRequestHandler` accepts `payloadScan?: PayloadScanOptions`
+(filled only by the dev runtime — `createDevApp(shell, payloadScan)`): a
+`[moons] peringatan dev` warning once per label when the SSR payload contains
+`leakTest.canary` or a secret-looking env value (name matches
+SECRET/TOKEN/KEY/…, value ≥12 characters). Production never scans.
 
 ## Plugin — `@moonsjs/vite`
 
@@ -31,56 +31,56 @@ export default defineConfig({
 });
 ```
 
-Tanggung jawab:
+Responsibilities:
 
-1. Load + validasi `moons.config.ts` (startup; `E_CONFIG_INVALID`).
-2. Scan route (; konflik → `E_ROUTE_CONFLICT`).
+1. Load + validate `moons.config.ts` (startup; `E_CONFIG_INVALID`).
+2. Scan routes (conflicts → `E_ROUTE_CONFLICT`).
 3. Typegen: `.moons/routes.d.ts`, `.moons/context.d.ts`.
-4. Scan semua `*.server.{ts,tsx}` → `.moons/fn-registry.json`
- (`"<rel>#<export>" → hash`,).
-5. **Transform ** (env client): stub `.server.ts` (schema + hash saja, cache
- `.moons/cache`), rejection import, `E_ENV_IN_CLIENT`,
-   validasi export modul route (`E_ROUTE_EXPORT_INVALID`); env ssr: injeksi meta
-   `__hash/__file/__line/__exportName`.
-6. Verifikasi `generateBundle` (client): modul `.server` wajib stub + scan
-   canary `leakTest.canary`.
-7. Dev server: SSR middleware (`/_moons/*` + halaman), HMR route.
+4. Scan every `*.server.{ts,tsx}` → `.moons/fn-registry.json`
+  (`"<rel>#<export>" → hash`).
+5. **Transform** (client env): `.server.ts` stub (schema + hash only, cached in
+ `.moons/cache`), import rejection, `E_ENV_IN_CLIENT`,
+   route module export validation (`E_ROUTE_EXPORT_INVALID`); ssr env: meta
+   injection `__hash/__file/__line/__exportName`.
+6. `generateBundle` verification (client): `.server` modules must be stubs + scan
+   for the `leakTest.canary` canary.
+7. Dev server: SSR middleware (`/_moons/*` + pages), route HMR.
 8. Build: `vite build` → `dist/client/**`; `vite build --ssr` →
- `dist/server/index.js` (; entry di-generate `.moons/server-entry.ts`,
-   eager import semua file ber-`serverFn`).
+ `dist/server/index.js` (the entry is generated as `.moons/server-entry.ts`,
+   eagerly importing every file with a `serverFn`).
 
-Hook yang dipakai: `config`, `configResolved`, `buildStart`, `resolveId`,
+Hooks used: `config`, `configResolved`, `buildStart`, `resolveId`,
 `load`, `transform`, `generateBundle`, `configureServer`, `handleHotUpdate`.
 
-## Virtual module (— id di-resolve `\0`-prefix)
+## Virtual modules (ids resolved by the `\0` prefix)
 
-| Id | Isi |
+| Id | Contents |
 |---|---|
-| `virtual:moons/routes` | `routes: RouteDefinition[]`, `clientManifest`, `loadRoute` (import() per file) |
+| `virtual:moons/routes` | `routes: RouteDefinition[]`, `clientManifest`, `loadRoute` (per-file import()) |
 | `virtual:moons/config` | re-export `moons.config.ts` + `validateConfig` |
-| `virtual:moons/client-entry` | manifest untuk `@moonsjs/react/client` |
-| `virtual:moons/server-entry` | handler dev (factory shell) / entry build |
+| `virtual:moons/client-entry` | manifest for `@moonsjs/react/client` |
+| `virtual:moons/server-entry` | dev handler (shell factory) / build entry |
 
 ## Runtime — `@moonsjs/vite/server`
 
-| Export | Fungsi |
+| Export | Function |
 |---|---|
-| `createRequestHandler(options)` | Handler `Request → Response`: health → RPC → route HTML; opsi: `routes`, `config`, `routesDir`, `loadRoute`, `shell` |
-| `createFileShell()` / `createDevShell()` | Shell prod (`dist/client/index.html`) / dev (`transformIndexHtml`) |
+| `createRequestHandler(options)` | `Request → Response` handler: health → RPC → HTML routes; options: `routes`, `config`, `routesDir`, `loadRoute`, `shell` |
+| `createFileShell()` / `createDevShell()` | Prod shell (`dist/client/index.html`) / dev shell (`transformIndexHtml`) |
 | `injectShell(template, markup, payload)` | Inject `#root` + payload (`ROOT_PLACEHOLDER`, `DEFAULT_TEMPLATE`) |
-| `startNodeServer(handler, options)` | Produksi `node:http`: static + handler + log port; opsi `port`, `clientDir`, `handleSignals`, `shutdownTimeoutMs` |
+| `startNodeServer(handler, options)` | Production `node:http`: static + handler + port log; options `port`, `clientDir`, `handleSignals`, `shutdownTimeoutMs` |
 | `installGracefulShutdown(server, options)` | SIGTERM/SIGINT → drain → exit 0; timeout → exit 1 |
-| `createTestServer(options, baseUrl?)` | Utility in-process tanpa port |
-| `resolveStaticFile(clientDir, pathname)` | Static anti path-traversal |
-| `toWebRequest` / `sendNodeResponse` | Konversi Node ↔ Web (body diteruskan) |
-| `installDevMiddleware(server, { templatePath })` | Middleware SSR dev |
+| `createTestServer(options, baseUrl?)` | In-process utility with no port |
+| `resolveStaticFile(clientDir, pathname)` | Path-traversal-safe static file resolution |
+| `toWebRequest` / `sendNodeResponse` | Node ↔ Web conversion (body is streamed through) |
+| `installDevMiddleware(server, { templatePath })` | Dev SSR middleware |
 
-Endpoint runtime: HTML semua route · static `dist/client/**` · RPC
+Runtime endpoints: HTML for every route · static `dist/client/**` · RPC
 `POST /_moons/fn/<hash>` · `/_moons/health` → `{"ok": true}`.
 
-## Lintasan kebocoran (tiga lapis)
+## Leak paths (three layers)
 
-1. Transform + rejection saat build/dev.
-2. Verifikasi `generateBundle` (module `.server` wajib stub; canary opsional).
-3. Leak test CI `scripts/m2/test-leak.sh` — dijalankan juga oleh
-   fixture lewat `leakTest.canary`.
+1. Transform + rejection at build/dev time.
+2. `generateBundle` verification (`.server` modules must be stubs; canary optional).
+3. CI leak test `scripts/m2/test-leak.sh` — also run by the
+   fixture via `leakTest.canary`.

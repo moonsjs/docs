@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@astrojs/starlight": "0.42.6",
+    "@fontsource-variable/inter": "^5.2.7",
+    "@fontsource-variable/jetbrains-mono": "^5.2.8",
     "astro": "7.3.8",
     "starlight-links-validator": "0.27.0"
   },

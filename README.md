@@ -1,21 +1,22 @@
 # Moons documentation
 
 Sumber situs **https://docs.devmoon.net** (Astro Starlight, deploy lewat
-Cloudflare Pages). Markdown staf di repo ini; hasil generate tidak di-commit.
+Cloudflare Pages). **English adalah locale default**; Bahasa Indonesia tersedia
+di `/id/**` dengan slug yang sama.
 
 ## Isi repo
 
-- `site/**` — halaman dokumentasi (Bahasa Indonesia).
-- `site-en/**` — terjemahan Inggris (diterbitkan di `/en/**`).
-- `ai/**` — konteks agen (English) + resep yang menautkan
-  [cookbook](https://github.com/moonsjs/cookbook) sebagai sumber pola.
-- `api/**`, `migration/**`, `manifest.md` — referensi paket, migrasi, arsitektur.
+- `site/**` — halaman English (root locale; slug diturunkan dari nama file).
+- `id/site/**` — terjemahan Bahasa Indonesia (slug sama, tampil di `/id/**`).
+- `api/**`, `migration/**`, `manifest.md` — referensi English (versi ID ada di `id/**`).
+- `ai/**` — konteks agen + resep (English; menu pada kedua locale).
 - `llms.txt` — indeks konteks agen (dibundel juga di paket `@moonsjs/cli`).
+- `src/pages/index.astro` — landing page custom (`/`).
+- `src/styles/custom.css` — tema situs.
 - `scripts/build.ts` — generate `src/content/docs/**`, `public/raw/**`,
-  `public/llms.txt`, `public/llms-full.txt`.
-- `scripts/check-public.ts` — guard: dokumentasi publik dilarang memuat rujukan
-  internal (PRD/§/Addendum).
-- `scripts/check-links.ts` — anti-drift tautan relatif + tautan cookbook.
+  `public/llms.txt`, `public/llms-full.txt`, `public/_redirects` (redirect URL lama).
+- `scripts/check-public.ts` — guard rujukan internal; `scripts/check-links.ts` —
+  anti-drift tautan (termasuk verifikasi tautan cookbook).
 
 ## Build
 

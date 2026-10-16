@@ -46,8 +46,8 @@ Yang dikirim ke browser adalah **stub RPC** (schema + hash), bukan isi handler.
 
 ## Query param + mutasi
 
-- Filter lewat query string: lihat [Navigasi & search param](/dasar/navigasi/).
-- Setelah mutasi, panggil [`refresh()`](/dasar/navigasi/)
+- Filter lewat query string: lihat [Navigasi & search param](/id/concepts/navigation/).
+- Setelah mutasi, panggil [`refresh()`](/id/concepts/navigation/)
   untuk memuat ulang data server.
 
 ## Rahasia & env

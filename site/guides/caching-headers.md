@@ -16,7 +16,7 @@ export const getUser = cache(async (id: string) => db.users.find(id));
 - Key = function + args (devalue serialization) — `Date`/plain objects are safe.
 - Outside a request → runs directly, no memo.
 - No cross-request cache: the server is the source of truth; revalidate with
-  [`refresh()`](/en/dasar/navigasi/) after mutations.
+  [`refresh()`](/concepts/navigation/) after mutations.
 
 ## HTTP headers & caching
 

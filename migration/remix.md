@@ -1,29 +1,29 @@
-# Migrasi dari Remix
+# Migrating from Remix
 
-> Non-blocking. Remix dan Moons sama-sama file-routing + loader di
-> server; perbedaan utamanya: **mutasi Moons lewat RPC ter-tipe**, bukan form
-> action/progressive enhancement (non-tujuan v1).
+> Non-blocking. Remix and Moons both do file routing + server
+> loaders; the main difference: **Moons mutations go through typed RPC**, not
+> form actions/progressive enhancement (non-goal in v1).
 
-## Pemetaan konsep
+## Concept mapping
 
 | Remix | Moons |
 |---|---|
 | `app/routes/users.$id.tsx` | `src/routes/users/[id].tsx` |
-| `app/root.tsx` + nested `_layout` | `_layout.tsx` di direktori route |
+| `app/root.tsx` + nested `_layout` | `_layout.tsx` in the route directory |
 | `ErrorBoundary` export | `_error.tsx` (root; `useRouteError()`) |
 | `CatchBoundary` / 404 | `_404.tsx` (root) |
 | `export const loader` (`{ params, request }`) | `export const loader` (`{ params, req, ctx }`) |
-| `useLoaderData<typeof loader>()` | `useLoaderData<typeof loader>()` (sama) |
-| `export const action` + `<Form>` | `serverFn` + panggilan dari client |
-| `json()` / `defer()` | return value biasa (devalue menjaga `Date`/`Map`/dst.) |
-| `useFetcher` / `useNavigation` | **belum ada v1** (tanpa pending-state API) |
-| `NavLink` | `Link` (tanpa `isActive` bawaan v1) |
-| `useRouteError()` | `useRouteError()` (di `_error.tsx`) |
-| `headers`/cookie session | v1 tidak ada API cookie/session; gunakan `serverFn` |
+| `useLoaderData<typeof loader>()` | `useLoaderData<typeof loader>()` (identical) |
+| `export const action` + `<Form>` | `serverFn` + a call from the client |
+| `json()` / `defer()` | a plain return value (devalue preserves `Date`/`Map`/etc.) |
+| `useFetcher` / `useNavigation` | **not in v1** (no pending-state API) |
+| `NavLink` | `Link` (no `isActive` in v1) |
+| `useRouteError()` | `useRouteError()` (in `_error.tsx`) |
+| `headers`/cookie session | v1 has no cookie/session API; use `serverFn` |
 | `remix build && remix-serve build` | `moons build && moons start` |
-| `.server.ts` (konvensi Remix) | `*.server.ts` + transform zero-trust |
+| `.server.ts` (Remix convention) | `*.server.ts` + the zero-trust transform |
 
-## Contoh: loader + mutasi
+## Example: loader + mutation
 
 **Remix**
 
@@ -93,7 +93,7 @@ export default function UserPage() {
 
   async function submit() {
     await renameUser({ input: { id, name } });
-    window.location.reload(); // v1 tanpa revalidation/optimistic API
+    window.location.reload(); // v1 has no revalidation/optimistic API
   }
 
   return (
@@ -106,18 +106,18 @@ export default function UserPage() {
 }
 ```
 
-## Yang tidak dipetakan (non-tujuan)
+## What is not mapped (non-goals)
 
-- Form actions/progressive enhancement berbasis HTML form, `useFetcher`,
-  revalidation otomatis, pending/optimistic UI.
-- Streaming/defer, resource routes REST, `headers` API per-route.
-- Cookie/session API tingkat framework.
+- HTML-form-based form actions/progressive enhancement, `useFetcher`,
+  automatic revalidation, pending/optimistic UI.
+- Streaming/defer, REST resource routes, per-route `headers` API.
+- Framework-level cookie/session API.
 
-## Checklist pasca-migrasi
+## Post-migration checklist
 
-1. `moons typegen` → `.moons/*.d.ts` ter-include di tsconfig.
-2. `bun run tsc --noEmit` hijau (tipe `input`/`output` serverFn mengikat client).
-3. Pindahkan seluruh akses rahasia ke `*.server.ts` + `env()`.
-4. Tidak ada import `node:*` di modul client (`E_FORBIDDEN_SERVER_IMPORT`).
-5. Tambahkan `leakTest.canary` pada app Anda (opsional) + jalankan leak test
-   dengan pola `scripts/m2/test-leak.sh`.
+1. `moons typegen` → `.moons/*.d.ts` included in tsconfig.
+2. `bun run tsc --noEmit` green (serverFn `input`/`output` types bind the client).
+3. Move all secret access into `*.server.ts` + `env()`.
+4. No `node:*` imports in client modules (`E_FORBIDDEN_SERVER_IMPORT`).
+5. Add `leakTest.canary` to your app (optional) + run the leak test
+   following the `scripts/m2/test-leak.sh` pattern.

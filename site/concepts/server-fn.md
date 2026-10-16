@@ -34,4 +34,4 @@ import in a route file becomes an RPC stub.
 - Wire format: `POST /_moons/fn/<hash>`, headers `x-moons: 1` +
   `content-type: application/x-moons`, devalue body/response.
 - Guard data with `ctx` inside the handler (auth pattern in
-  [Auth & CSRF](/en/panduan/auth-dan-csrf/)).
+  [Auth & CSRF](/guides/auth-csrf/)).

@@ -58,8 +58,8 @@ bun run build          # dist/client/** + dist/server/index.js
 bun run start          # NODE_ENV=production; health di /_moons/health
 ```
 
-Selengkapnya: [Struktur proyek](/mulai/struktur-proyek/) ·
-[Deploy](/panduan/deploy/).
+Selengkapnya: [Struktur proyek](/id/start/project-structure/) ·
+[Deploy](/id/guides/deploy/).
 
 ## Perintah CLI
 

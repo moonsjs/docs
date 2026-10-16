@@ -23,7 +23,7 @@ my-app/
   `_404`/`_error` hanya `default`.
 - **`src/server/*.server.ts`** — satu-satunya tempat untuk rahasia, `env()`,
   dan import `node:*`/`bun:*`. Di bundle client, file ini diganti stub RPC
-  ([detail](/keamanan/)).
+  ([detail](/id/concepts/zero-trust/)).
 - **`src/client/main.tsx`** — entry hidrasi. Tidak perlu diubah.
 - **`src/shared/`** — schema/modul yang dipakai client **dan** server (mis.
   schema validasi, helper murni, `cn`).
@@ -33,9 +33,9 @@ my-app/
 - **`public/`** — aset statis yang disalin apa adanya ke `dist/client`
   (favicon, gambar, robots.txt) dan disajikan tanpa lewat SSR.
 - **`test/`** — test in-process dengan `createTestServer`
-  ([panduan testing](/panduan/testing/)); jalankan `bun test`.
+  ([panduan testing](/id/guides/testing/)); jalankan `bun test`.
 - **`Dockerfile` / `.dockerignore`** — contoh deploy container
-  ([build & deploy](/panduan/deploy/)).
+  ([build & deploy](/id/guides/deploy/)).
 
 ## `moons.config.ts`
 
@@ -50,10 +50,10 @@ export default defineConfig({
 
 Nilai yang dikembalikan `context` menjadi `ctx` — tersedia di middleware,
 loader, dan handler serverFn, serta bertipe global lewat `.moons/context.d.ts`
-hasil typegen. Lihat [Context & env](/dasar/context-env/).
+hasil typegen. Lihat [Context & env](/id/concepts/context-env/).
 
 ## Berikutnya
 
-- [Routing](/dasar/routing/)
-- [Loader](/dasar/loader/)
-- [serverFn](/dasar/server-fn/)
+- [Routing](/id/concepts/routing/)
+- [Loader](/id/concepts/loaders/)
+- [serverFn](/id/concepts/server-fn/)

@@ -1,34 +1,35 @@
-# `@moonsjs/mcp` & paket konteks agen
+# `@moonsjs/mcp` & the agent context pack
 
-MCP server (stdio, bin `moons-mcp`) + dokumen konteks yang dibaca agen.
-Referensi API React (`useSearchParams`, `refresh`, `Link search`) ada di
-[`react.md`](./react.md); kontrak JSON CLI di
+MCP server (stdio, `moons-mcp` bin) + the context documents agents read.
+The React API reference (`useSearchParams`, `refresh`, `Link search`) lives in
+[`react.md`](react.md); the CLI JSON contract in
 [`../ai/cli-json.md`](../ai/cli-json.md).
 
-## Tool MCP
+## MCP tools
 
 | Tool | Input | Output |
 |---|---|---|
-| `list_routes` | — | Tabel route aktual (sama dengan `moons routes --json`) |
-| `get_fn_registry` | — | Registry serverFn + `serverFiles` |
+| `list_routes` | — | Actual route table (same as `moons routes --json`) |
+| `get_fn_registry` | — | serverFn registry + `serverFiles` |
 | `run_check` | — | `CheckJson` (typegen → tsc → build client/server → prerender) |
-| `search_docs` | `{ query }` | Pencarian konteks: **lokal** (`node_modules/@moonsjs/cli/docs/ai/CONTEXT.md`) → docs.devmoon.net → pages.dev → GitHub raw |
-| `explain_error` | `{ code }` | Katalog: trigger + details + suggestions (`found=false` + `validCodes` bila tak dikenal) |
+| `search_docs` | `{ query }` | Context search: **local** (`node_modules/@moonsjs/cli/docs/ai/CONTEXT.md`) → docs.devmoon.net → pages.dev → GitHub raw |
+| `explain_error` | `{ code }` | Catalog: trigger + details + suggestions (`found=false` + `validCodes` when unknown) |
 
-Semua tool deterministik; tidak ada panggilan LLM di framework.
+All tools are deterministic; there are no LLM calls in the framework.
 
-## Paket konteks agen (English)
+## Agent context pack (English)
 
-- `llms.txt` / `llms-full.txt` (root repo; `llms-full` juga di situs).
-- `docs/ai/CONTEXT.md` — panduan ringkas (anatomi route, loader, serverFn,
-  keamanan, navigasi, verifikasi).
-- `docs/ai/recipes/*` — resep bertaut ke kode nyata `examples/cookbook`
-  (anti-drift dijaga `scripts/ai/check-ai-links.ts` di CI).
-- `moons create` menulis `AGENTS.md` (peta route aktual app) + `llms.txt` lokal;
-  paket `cli` membundel `docs/ai/**` + `llms.txt` untuk akses offline.
+- `llms.txt` / `llms-full.txt` (repo root; `llms-full` is also on the site).
+- `docs/ai/CONTEXT.md` — a compact guide (route anatomy, loaders, serverFn,
+  security, navigation, verification).
+- `docs/ai/recipes/*` — recipes linking to real code in `examples/cookbook`
+  (anti-drift enforced by `scripts/ai/check-ai-links.ts` in CI).
+- `moons create` writes `AGENTS.md` (the app's actual route map) + a local
+  `llms.txt`; the `cli` package bundles `docs/ai/**` + `llms.txt` for offline
+  access.
 
-## Kontrak CLI JSON
+## CLI JSON contract
 
-`moons routes|fns|check|errors --json` — skema stabil didokumentasikan di
-[`../ai/cli-json.md`](../ai/cli-json.md); stderr wajib sunyi di mode `--json`
-(dijaga `scripts/ai/test-cli-introspection.sh`).
+`moons routes|fns|check|errors --json` — the stable schemas are documented in
+[`../ai/cli-json.md`](../ai/cli-json.md); stderr must stay silent in `--json`
+mode (enforced by `scripts/ai/test-cli-introspection.sh`).

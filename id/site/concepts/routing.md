@@ -70,4 +70,4 @@ import { Link } from "@moonsjs/react";
 ```
 
 Klik kiri tanpa modifier = navigasi client-side (fetch + swap + hydrate).
-Selengkapnya: [Navigasi & search param](/dasar/navigasi/).
+Selengkapnya: [Navigasi & search param](/id/concepts/navigation/).

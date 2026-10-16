@@ -1,24 +1,24 @@
 # `@moonsjs/cli`
 
-Bin `moons` (RFC). v1 dijalankan dari repo:
-`bun packages/cli/src/cli.ts <command>` — belum ada instalasi global/npm
-(: scope npm & lisensi menunggu keputusan pemilik produk).
+The `moons` bin (RFC). v1 runs from the repo:
+`bun packages/cli/src/cli.ts <command>` — no global/npm install yet
+(npm scope & license pending a product-owner decision).
 
-## Perintah
+## Commands
 
-| Perintah | Perilaku |
+| Command | Behavior |
 |---|---|
-| `moons create <name>` | Scaffold dari `examples/basic`: copy (exclude `node_modules/dist/.moons/.git`), rewrite `name` di package.json, tulis `.gitignore`, jalankan `bun install` (dilewati bila target anggota workspace), print instruksi. Target non-kosong → error |
-| `moons dev` | Dev server Vite (HMR + SSR), port `PORT` env (default 3000), `--strictPort`; SIGTERM/SIGINT diteruskan ke proses Vite. |
-| `moons build` | `vite build` → `vite build --ssr` (bin vite di-resolve dari cwd ke atas, dijalankan dengan runtime saat ini). Output `dist/client/**` + `dist/server/index.js`; leak check canary berjalan di dalam build bila `leakTest.canary` disetel. |
-| `moons start` | Load `dist/server/index.js` in-process; PORT/3000; HTML+static+RPC+health; SIGTERM → drain. |
+| `moons create <name>` | Scaffold from `examples/basic`: copy (excluding `node_modules/dist/.moons/.git`), rewrite `name` in package.json, write `.gitignore`, run `bun install` (skipped when the target is a workspace member), print instructions. Non-empty target → error |
+| `moons dev` | Vite dev server (HMR + SSR), port from `PORT` env (default 3000), `--strictPort`; SIGTERM/SIGINT are forwarded to the Vite process. |
+| `moons build` | `vite build` → `vite build --ssr` (the vite bin is resolved upward from cwd, run with the current runtime). Output `dist/client/**` + `dist/server/index.js`; the canary leak check runs inside the build when `leakTest.canary` is set. |
+| `moons start` | Loads `dist/server/index.js` in-process; PORT/3000; HTML+static+RPC+health; SIGTERM → drain. |
 | `moons typegen` | `loadConfigFromFile` + `validateConfig` + `generateTypes` → `.moons/*.d.ts`. |
 | `moons help` / `--help` | Usage. |
 
-Exit code: `0` sukses; `1` error (format untuk `MoonsError`, stack untuk
-error tak terduga); `dev` meneruskan exit code proses Vite.
+Exit codes: `0` success; `1` error (formatted for `MoonsError`; stack for
+unexpected errors); `dev` forwards the Vite process exit code.
 
-## Export programatik
+## Programmatic exports
 
 ```ts
 runCli(argv, cwd?): Promise<number>;
@@ -32,8 +32,8 @@ resolveViteBin(cwd): string;
 repoRoot: string; templateDir: string;        // v1: berbasis lokasi source repo
 ```
 
-## Batasan v1 (dicatat)
+## v1 limitations (noted)
 
-- Template & pemanggilan Vite mengasumsikan source monorepo (scaffold standalone
-  menunggu paket dipublikasikan; lihat `../decisions/0006-m5-cli.md`).
-- `create` di dalam workspace melewati `bun install` (dependensi dari workspace).
+- The template & Vite invocation assume a monorepo source (standalone scaffold
+  waits until the packages are published; see `../decisions/0006-m5-cli.md`).
+- `create` inside a workspace skips `bun install` (dependencies come from the workspace).

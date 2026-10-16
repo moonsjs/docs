@@ -48,4 +48,4 @@ export const GET = (): Response =>
   default — verify signatures/tokens yourself, or add protection in global
   middleware.
 - `security.bodyLimitBytes` does **not** apply to API routes; enforce your own
-  limits (see [File uploads](/en/panduan/upload/)).
+  limits (see [File uploads](/guides/uploads/)).

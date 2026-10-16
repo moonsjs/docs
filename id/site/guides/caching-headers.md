@@ -19,7 +19,7 @@ export const getUser = cache(async (id: string) => db.users.find(id));
 - Key = fungsi + argumen (serialisasi devalue) — `Date`/objek biasa aman.
 - Dipanggil di luar request (mis. saat build) → berjalan langsung tanpa memo.
 - Tidak ada cache lintas-request: server adalah sumber kebenaran; gunakan
-  revalidasi [`refresh()`](/dasar/navigasi/) setelah mutasi.
+  revalidasi [`refresh()`](/id/concepts/navigation/) setelah mutasi.
 
 ## Header HTTP & middleware
 

@@ -6,8 +6,14 @@ import { readFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
 const repoRoot = resolve(import.meta.dir, "..");
-const files: string[] = [join(repoRoot, "llms.txt"), join(repoRoot, "manifest.md")];
-for (const pattern of ["site/**/*.md", "site-en/**/*.md", "ai/**/*.md", "api/**/*.md", "migration/**/*.md"]) {
+const files: string[] = [join(repoRoot, "llms.txt"), join(repoRoot, "manifest.md"), join(repoRoot, "id", "manifest.md")];
+for (const pattern of [
+  "site/**/*.md",
+  "id/**/*.md",
+  "ai/**/*.md",
+  "api/**/*.md",
+  "migration/**/*.md",
+]) {
   const glob = new Bun.Glob(pattern);
   for (const rel of await Array.fromAsync(glob.scan({ cwd: repoRoot }))) {
     files.push(join(repoRoot, rel));

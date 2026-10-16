@@ -1,10 +1,13 @@
 #!/usr/bin/env bun
 // Generate proyek Starlight dari sumber markdown repo ini:
-//   site/**      → halaman ID (slug tanpa prefix)
-//   site-en/**   → terjemahan EN (slug `en/**`)
-//   ai/**, api/**, migration/**, manifest.md → referensi & konteks agen
-// Output: src/content/docs/**, public/raw/**, public/llms.txt, public/llms-full.txt.
-// Sumber: scripts/build.ts (adaptasi scripts/mirror/build-docs-site.ts).
+//   site/**                  → English (root locale; slug tanpa prefix `site/`)
+//   id/**                    → Bahasa Indonesia (locale `id`, prefix konten `id/`)
+//   api/**, migration/**, manifest.md → referensi English (root)
+//   ai/**                    → konteks agen (English, root)
+// Output: src/content/docs/**, public/raw/**, public/llms.txt,
+//         public/llms-full.txt, public/_redirects.
+//
+// Landing root (`/`) dirender oleh src/pages/index.astro (bukan markdown).
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 
@@ -25,11 +28,11 @@ function walk(dir: string): string[] {
 }
 
 interface Source {
-  /** Path relatif repo: `site/mulai/mulai-cepat.md`, `manifest.md`. */
+  /** Path relatif repo: `site/start/quickstart.md`, `id/api/core.md`. */
   repoRel: string;
-  /** Path raw publik: `site/mulai/mulai-cepat.md`, `ai/CONTEXT.md`. */
+  /** Path raw publik (prefix locale dipertahankan): `id/site/...`. */
   rawRel: string;
-  /** Path konten Starlight: `mulai/mulai-cepat.md`, `en/mulai/mulai-cepat.md`. */
+  /** Path konten Starlight: `start/quickstart.md`, `id/start/quickstart.md`. */
   slugRel: string;
   text: string;
 }
@@ -38,9 +41,9 @@ function toPosix(p: string): string {
   return p.split(sep).join("/");
 }
 
-function slugFor(rawRel: string): string {
-  // Halaman manusia berada di `site/**` — prefix dibuang dari URL.
-  const withoutSite = rawRel.startsWith("site/") ? rawRel.slice("site/".length) : rawRel;
+/** Halaman manusia berada di `site/**` — prefix dibuang dari URL. */
+function slugCore(rel: string): string {
+  const withoutSite = rel.startsWith("site/") ? rel.slice("site/".length) : rel;
   const lowered = withoutSite.toLowerCase();
   return lowered.endsWith("readme.md")
     ? lowered.slice(0, -"readme.md".length) + "index.md"
@@ -51,7 +54,7 @@ function yamlString(value: string): string {
   return `"${value.replaceAll("\\", "\\\\").replaceAll('"', '\\"')}"`;
 }
 
-/** URL situs untuk sebuah slug konten: `api/core.md` → `/api/core/`, `api/index.md` → `/api/`. */
+/** URL situs untuk sebuah slug konten: `api/core.md` → `/api/core/`, `id/index.md` → `/id/`. */
 function slugUrl(slugRel: string): string {
   const withoutExt = slugRel.replace(/\.md$/, "");
   const trimmed = withoutExt.replace(/\/index$/, "").replace(/^index$/, "");
@@ -173,7 +176,7 @@ function truncateDescription(text: string, max = 160): string {
   cut = cut.replace(/[\s—:;,.\-]+$/u, "");
   const words = cut.split(" ");
   const last = words[words.length - 1];
-  if (last !== undefined && /^(dan|atau|yang|di|ke|dari|untuk|dengan|pada|ini|itu)$/.test(last)) {
+  if (last !== undefined && /^(dan|atau|yang|di|ke|dari|untuk|dengan|pada|ini|itu|and|or|the|to|of)$/.test(last)) {
     words.pop();
     cut = words.join(" ");
   }
@@ -201,15 +204,16 @@ function preparePage(
 
 // 1) Kumpulkan sumber
 const sources: Source[] = [];
+
+// Root locale (English): site/**, ai/**, api/**, migration/**, manifest.md
 for (const dir of ["site", "ai", "api", "migration"]) {
   for (const file of walk(join(repoRoot, dir))) {
     const rel = toPosix(relative(repoRoot, file));
-    sources.push({
-      repoRel: rel,
-      rawRel: rel,
-      slugRel: slugFor(rel),
-      text: readFileSync(file, "utf8"),
-    });
+    if (rel === "site/index.md") {
+      // Landing root dirender src/pages/index.astro.
+      continue;
+    }
+    sources.push({ repoRel: rel, rawRel: rel, slugRel: slugCore(rel), text: readFileSync(file, "utf8") });
   }
 }
 const manifestPath = join(repoRoot, "manifest.md");
@@ -221,28 +225,40 @@ if (existsSync(manifestPath)) {
     text: readFileSync(manifestPath, "utf8"),
   });
 }
-const siteEnRoot = join(repoRoot, "site-en");
-if (existsSync(siteEnRoot)) {
-  for (const file of walk(siteEnRoot)) {
-    const rel = toPosix(relative(siteEnRoot, file));
+
+// Locale `id`: id/site/**, id/api/**, id/migration/**, id/manifest.md
+for (const dir of ["id/site", "id/api", "id/migration"]) {
+  for (const file of walk(join(repoRoot, dir))) {
+    const rel = toPosix(relative(repoRoot, file));
+    const inner = rel.slice("id/".length);
     sources.push({
-      repoRel: `site-en/${rel}`,
-      rawRel: `site-en/${rel}`,
-      slugRel: `en/${rel}`,
+      repoRel: rel,
+      rawRel: rel,
+      slugRel: `id/${slugCore(inner)}`,
       text: readFileSync(file, "utf8"),
     });
   }
 }
+const manifestIdPath = join(repoRoot, "id", "manifest.md");
+if (existsSync(manifestIdPath)) {
+  sources.push({
+    repoRel: "id/manifest.md",
+    rawRel: "id/manifest.md",
+    slugRel: "id/manifest.md",
+    text: readFileSync(manifestIdPath, "utf8"),
+  });
+}
+
 sources.sort((a, b) => a.rawRel.localeCompare(b.rawRel));
 
 if (sources.length === 0) {
   throw new Error("tidak ada markdown sumber di repo ini");
 }
-if (!sources.some((source) => source.slugRel === "index.md")) {
-  throw new Error("site/index.md (landing) tidak ditemukan");
+if (!sources.some((source) => source.slugRel === "start/quickstart.md")) {
+  throw new Error("site/start/quickstart.md (EN quickstart) tidak ditemukan");
 }
-if (!sources.some((source) => source.slugRel === "en/index.md")) {
-  throw new Error("site-en/index.md (landing EN) tidak ditemukan");
+if (!sources.some((source) => source.slugRel === "id/index.md")) {
+  throw new Error("id/site/index.md (landing ID) tidak ditemukan");
 }
 
 // 2) Halaman Starlight (frontmatter title + H1 dihapus)
@@ -267,6 +283,7 @@ for (const source of sources) {
 }
 
 // 3) Markdown mentah untuk agen (case asli; link internal diarahkan ke situs)
+rmSync(join(repoRoot, "public", "raw"), { recursive: true, force: true });
 for (const source of sources) {
   const dest = join(repoRoot, "public", "raw", source.rawRel);
   mkdirSync(dirname(dest), { recursive: true });
@@ -304,4 +321,54 @@ fullParts.push("\n");
 mkdirSync(join(repoRoot, "public"), { recursive: true });
 writeFileSync(join(repoRoot, "public", "llms-full.txt"), fullParts.join(""));
 
-console.log(`OK build docs (${sources.length} halaman + raw + llms)`);
+// 6) Redirect URL lama (migrasi slug EN + default EN). Format Cloudflare Pages.
+const OLD_TO_NEW: Record<string, string> = {
+  "index.md": "index.md",
+  "keamanan.md": "concepts/zero-trust.md",
+  "mulai/mulai-cepat.md": "start/quickstart.md",
+  "mulai/struktur-proyek.md": "start/project-structure.md",
+  "dasar/routing.md": "concepts/routing.md",
+  "dasar/loader.md": "concepts/loaders.md",
+  "dasar/server-fn.md": "concepts/server-fn.md",
+  "dasar/context-env.md": "concepts/context-env.md",
+  "dasar/navigasi.md": "concepts/navigation.md",
+  "dasar/meta.md": "concepts/meta.md",
+  "dasar/error.md": "concepts/errors.md",
+  "panduan/validasi-dua-sisi.md": "guides/two-sided-validation.md",
+  "panduan/auth-dan-csrf.md": "guides/auth-csrf.md",
+  "panduan/rate-limit.md": "guides/rate-limit.md",
+  "panduan/api-routes.md": "guides/api-routes.md",
+  "panduan/prerender.md": "guides/prerender-isr.md",
+  "panduan/upload.md": "guides/uploads.md",
+  "panduan/cache-dan-http.md": "guides/caching-headers.md",
+  "panduan/testing.md": "guides/testing.md",
+  "panduan/plugin.md": "guides/plugins.md",
+  "panduan/deploy.md": "guides/deploy.md",
+};
+
+function toUrl(rel: string, localePrefix: string): string {
+  const withoutExt = rel.replace(/\.md$/, "");
+  const trimmed = withoutExt.replace(/\/index$/, "").replace(/^index$/, "");
+  const path = trimmed.length === 0 ? "" : `/${trimmed}`;
+  return `${localePrefix}${path}/`;
+}
+
+const redirects: string[] = ["# Generated by scripts/build.ts — jangan diubah manual."];
+for (const [oldPath, newPath] of Object.entries(OLD_TO_NEW)) {
+  if (oldPath === "index.md") {
+    // Landing lama /en/ (EN) → root baru; root lama TIDAK dialihkan karena
+    // sekarang berisi landing EN yang baru.
+    redirects.push(`${toUrl(oldPath, "/en")} ${toUrl(newPath, "")} 301`);
+    continue;
+  }
+  // URL lama root = konten Indonesia → arahkan ke /id/**.
+  redirects.push(`${toUrl(oldPath, "")} ${toUrl(newPath, "/id")} 301`);
+  // URL lama /en/** = konten Inggris → sekarang root.
+  redirects.push(`${toUrl(oldPath, "/en")} ${toUrl(newPath, "")} 301`);
+  // Raw lama: /raw/site/<lama> (ID) dan /raw/site-en/<lama> (EN).
+  redirects.push(`/raw/site/${oldPath} /raw/id/site/${newPath} 301`);
+  redirects.push(`/raw/site-en/${oldPath} /raw/site/${newPath} 301`);
+}
+writeFileSync(join(repoRoot, "public", "_redirects"), redirects.join("\n") + "\n");
+
+console.log(`OK build docs (${sources.length} halaman + raw + llms + redirects)`);

@@ -28,13 +28,13 @@ my-app/
   `default | loader`; `_error`/`_404` only `default`.
 - **`src/server/*.server.ts`** — the only place for secrets, `env()`, and
   `node:*`/`bun:*` imports. In the client bundle these files become RPC stubs
-  ([details](/en/keamanan/)).
+  ([details](/concepts/zero-trust/)).
 - **`src/shared/`** — schemas/modules used by client **and** server (validation
   schemas, pure helpers, `cn`).
 - **`src/components/`** — client-safe UI components (shadcn/ui pattern; see the
   [Tailwind](/ai/recipes/tailwind/) & [shadcn/ui](/ai/recipes/shadcn-ui/) recipes).
 - **`public/`** — static assets served without SSR.
 - **`test/`** — in-process tests with `createTestServer`
-  ([testing guide](/en/panduan/testing/)); run `bun test`.
+  ([testing guide](/guides/testing/)); run `bun test`.
 - **`Dockerfile` / `.dockerignore`** — container deploy example
-  ([build & deploy](/en/panduan/deploy/)).
+  ([build & deploy](/guides/deploy/)).

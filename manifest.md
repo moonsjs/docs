@@ -1,152 +1,155 @@
-# Manifest — Mengapa Batas Server/Client Berbahaya
+# Manifest — Why the Server/Client Boundary Is Dangerous
 
-> Dokumen ini menjelaskan posisi Moons terhadap cara framework lain menjaga
-> batas server→client. Nada tegas; klaim yang dibuat hanya yang bisa
-> diverifikasi dari repo ini (transform rejection build, leak test)
-> atau mekanisme publik yang bisa diperiksa di dokumentasi framework terkait.
+> This document lays out Moons' position on how other frameworks guard the
+> server→client boundary. The tone is firm; the claims made are only ones you
+> can verify from this repo (the build-time transform rejection, the leak test)
+> or public mechanisms you can inspect in the relevant framework's docs.
 
-## 1. Klaim
+## 1. The claim
 
 > **Moons: the full-stack TypeScript framework that makes leaking server code
-> to the client impossible.** 
+> to the client impossible.**
 
-Kebocoran kode server ke bundle client bukan "risiko yang dikelola" — itu
-kegagalan kategori. Sekali handler, secret, atau nilai `env()` ikut terkirim ke
-browser, tidak ada mitigasi yang menariknya kembali: bundle sudah ada di tangan
-pengguna. Karena itu Moons menempatkan kebocoran sebagai **kondisi berhenti
-proyek**: kalau transform bisa diakali, framework ini dusta.
+Leaking server code into the client bundle is not a "managed risk" — it is a
+category failure. Once a handler, a secret, or an `env()` value ships to the
+browser, no mitigation pulls it back: the bundle is already in the user's hands.
+That is why Moons treats a leak as a **project-stopping condition**: if the
+transform can be bypassed, this framework is a lie.
 
-## 2. Definisi "mustahil" 
+## 2. The definition of "impossible"
 
-`dist/client/**` MUST NOT memuat:
+`dist/client/**` MUST NOT contain:
 
-1. Isi handler `serverFn` (baris apa pun).
-2. Import asli `*.server.ts` selain stub RPC.
-3. Import `node:*`, `bun:*`, atau modul server-only.
-4. Nilai `env()`.
-5. Konstanta/string/komentar server.
-6. Isi file `*.server.ts` asli (hanya stub).
+1. The contents of `serverFn` handlers (any line).
+2. Real `*.server.ts` imports other than the RPC stub.
+3. `node:*`, `bun:*`, or server-only module imports.
+4. `env()` values.
+5. Server constants/strings/comments.
+6. The contents of real `*.server.ts` files (stubs only).
 
-Ditegakkan tiga lapis: **transform build-time**, **rejection build-time**,
-**CI leak test** (canary di-inject, `dist/client` dipindai, build gagal bila
-ditemukan).
+Enforced in three layers: the **build-time transform**, the **build-time
+rejection**, and the **CI leak test** (a canary is injected, `dist/client` is
+scanned, and the build fails if it is found).
 
-## 3. Bagaimana kebocoran benar-benar terjadi
+## 3. How leaks actually happen
 
-Enam jalur yang berulang di praktik:
+Six paths that recur in practice:
 
-| # | Jalur | Contoh |
+| # | Path | Example |
 |---|---|---|
-| 1 | Import langsung | route mengimpor helper/konstanta dari modul server |
-| 2 | Import tidak langsung | barrel `export *` / file perantara menarik modul server |
-| 3 | Dynamic import | `await import("./debug.server")` di jalur client |
-| 4 | Nilai env | variabel privat ter-inline ke kode client |
-| 5 | Body handler | closure/handler ikut lambat dibundel karena modul diimpor utuh |
-| 6 | Sisa artefak | komentar, konstanta, source map, stub yang mengembalikan `Response` server |
+| 1 | Direct import | a route imports a helper/constant from a server module |
+| 2 | Indirect import | an `export *` barrel / intermediary file pulls in a server module |
+| 3 | Dynamic import | `await import("./debug.server")` on a client path |
+| 4 | Env values | private variables inlined into client code |
+| 5 | Handler bodies | closures/handlers get bundled anyway because the module is imported whole |
+| 6 | Leftover artifacts | comments, constants, source maps, stubs that return a server `Response` |
 
-Semua enam mudah lolos review: yang terlihat di diff hanyalah satu baris import.
+All six slip past review easily: all that shows up in the diff is a single
+import line.
 
-## 4. Bagaimana pendekatan umum bekerja
+## 4. How the common approaches work
 
-Framework mapan punya jawaban masing-masing — dan jawaban itu pada umumnya
-**berbasis konvensi + disiplin**:
+Established frameworks each have their own answer — and that answer is generally
+**based on convention + discipline**:
 
-- **Prefix publik untuk env** (mis. `NEXT_PUBLIC_`, `PUBLIC_*`): variabel tanpa
-  prefix tidak ikut client — selama penamaan benar.
-- **Paket/penanda server-only** (mis. `server-only`, direktif `'use server'`,
-  folder `$lib/server`, `server/`): import yang salah ditolak compiler *bila*
-  penandanya dipasang.
-- **Konvensi nama file** (mis. `*.server.ts`): modul server dipisah dari client —
-  bergantung pada penamaan yang konsisten.
-- **Tree-shaking/edge bundling**: berharap kode tak terpakai dibuang — kegagalan
-  bersifat diam (tidak ada error, hanya byte yang terkirim).
+- **Public prefixes for env** (e.g. `NEXT_PUBLIC_`, `PUBLIC_*`): variables without
+  the prefix stay out of the client — as long as the naming is right.
+- **Server-only packages/markers** (e.g. `server-only`, the `'use server'`
+  directive, the `$lib/server` folder, `server/`): a wrong import is rejected by
+  the compiler *if* the marker is in place.
+- **File naming conventions** (e.g. `*.server.ts`): server modules are kept
+  apart from the client — relying on consistent naming.
+- **Tree-shaking/edge bundling**: hoping unused code is dropped — the failure
+  is silent (no error, just bytes shipped).
 
-Pola-pola ini bekerja cukup baik untuk tim disiplin. Masalahnya: jaminannya
-adalah *"tidak boleh"* yang ditegakkan lewat review manusia — bukan *"tidak
-bisa"* yang ditegakkan oleh build yang gagal.
+These patterns work well enough for disciplined teams. The problem: the
+guarantee is a *"must not"* enforced through human review — not a *"cannot"*
+enforced by a build that fails.
 
-## 5. Tiga lapis penegakan Moons
+## 5. The three enforcement layers in Moons
 
-1. **Transform ** — setiap `*.server.ts` yang masuk graph client diganti
- stub: hanya `input`/`output` schema + hash stabil yang tersisa; body
-   handler, ekspor non-`serverFn`, dan import `node:*`/`bun:*` **dibuang**.
-   Import ilegal (non-`serverFn`, default, namespace, dynamic import tanpa guard
-   `DEV`), pemanggilan `env()`, dan import `node:*` **menggagalkan build** dengan
- error lengkap `file:line` + `Saran`.
-2. **Rejection build** — aturan yang sama dievaluasi di dev dan build,
- termasuk re-export dan conditional import.
-3. **Leak test CI — sacred**: canary ditanam di handler fixture; setelah
-   build, `dist/client` dipindai; ditemukan → **merge dilarang**. Fixture
-   `examples/m2-leak` juga menyetel `leakTest.canary` sehingga build itu sendiri
-   gagal bila canary muncul (dua jalur gagal, satu kebenaran).
+1. **Transform** — every `*.server.ts` that enters the client graph is replaced
+ by a stub: only the `input`/`output` schemas + the stable hash remain; the
+ handler body, non-`serverFn` exports, and `node:*`/`bun:*` imports are **discarded**.
+   Illegal imports (non-`serverFn`, default, namespace, dynamic import without a
+   `DEV` guard), `env()` calls, and `node:*` imports **fail the build** with the
+ full `file:line` error + `Saran`.
+2. **Build rejection** — the same rules are evaluated in dev and build,
+   including re-exports and conditional imports.
+3. **CI leak test — sacred**: the canary is planted in a fixture handler; after
+   the build, `dist/client` is scanned; if found → **merge is forbidden**. The
+   `examples/m2-leak` fixture also sets `leakTest.canary` so the build itself
+   fails if the canary appears (two failure paths, one truth).
 
-Bukti eksekusi: `scripts/m2/test-leak.sh`, `test-import-reject.sh`,
-`test-error-format.sh` + unit test transform (lihat `docs/decisions/0003-m2-zero-trust.md`).
+Execution evidence: `scripts/m2/test-leak.sh`, `test-import-reject.sh`,
+`test-error-format.sh` + transform unit tests (see `docs/decisions/0003-m2-zero-trust.md`).
 
-## 6. Perbandingan mekanisme
+## 6. Mechanism comparison
 
-| Pertanyaan | Konvensi umum | Moons |
+| Question | Common convention | Moons |
 |---|---|---|
-| Batas modul server/client | Nama file / paket penanda / direktif | `*.server.ts` + transform stub (kode asli tidak pernah masuk graph client) |
-| Import ilegal | Review + compiler bila ditandai | Build gagal (`E_SERVER_IMPORT_IN_CLIENT`) dengan `file:line` + saran |
-| Body handler di client | Bergantung tree-shaking | Handler diganti stub secara struktural; tidak ada jalur "handler utuh" |
-| Dynamic import | Umumnya tidak ditegakkan | Ditolak (`E_SERVER_IMPORT_IN_CLIENT`) kecuali branch `DEV` yang mati saat build |
-| Env privat | Uji disiplin penamaan | `env()` server-only; dipanggil di client → `E_ENV_IN_CLIENT` (build + runtime) |
-| Validasi batas | Opsional per proyek | Wajib schema `input`/`output` di kedua sisi |
-| Bukti kebocoran | Test milik tim | Leak test framework-level wajib hijau; merah = merge dilarang |
+| Server/client module boundary | File names / marker packages / directives | `*.server.ts` + stub transform (the real code never enters the client graph) |
+| Illegal imports | Review + compiler when marked | Build fails (`E_SERVER_IMPORT_IN_CLIENT`) with `file:line` + suggestions |
+| Handler bodies on the client | Depends on tree-shaking | Handlers are structurally replaced by stubs; there is no "whole handler" path |
+| Dynamic imports | Usually not enforced | Rejected (`E_SERVER_IMPORT_IN_CLIENT`) unless the branch is `DEV`-dead at build time |
+| Private env | A naming-discipline test | `env()` is server-only; called in the client → `E_ENV_IN_CLIENT` (build + runtime) |
+| Boundary validation | Optional per project | Required `input`/`output` schemas on both sides |
+| Leak evidence | The team's own tests | The framework-level leak test must be green; red = merge forbidden |
 
-## 7. Batas jujur
+## 7. Honest limits
 
-- Kode yang ditulis di modul client **memang untuk client** — Moons tidak
-  menyembunyikan apa yang Anda taruh di sana.
-- `plugins` belum dieksekusi; integrasi internal core bukan jalur yang
-  didukung v1.
-- Rendering `meta` (title/description) belum diimplementasikan v1; gunakan
+- Code written in client modules **is client code by definition** — Moons does
+  not hide what you put there.
+- `plugins` are not executed yet; internal core integration is not a v1-supported
+  path.
+- Rendering `meta` (title/description) is not implemented in v1; use
   `index.html`.
-- Source map client tidak diaktifkan build v1.
-- Jaminan berlaku untuk alur build plugin `moons()`; menonaktifkan plugin atau
-  mengimpor `.server.ts` lewat jalur non-Vite bukan skenario yang didukung.
+- Client source maps are not enabled in the v1 build.
+- The guarantee applies to the `moons()` plugin build pipeline; disabling the
+  plugin or importing `.server.ts` through a non-Vite path is not a supported
+  scenario.
 
-## 8. Bahasa & register dokumentasi
+## 8. Documentation language & register
 
-Dua register dipisah **dengan sengaja**:
+Two registers are kept apart **on purpose**:
 
-| Register | Bahasa | Lokasi | Alasan |
+| Register | Language | Location | Reason |
 | --- | --- | --- | --- |
-| Dokumentasi pengguna | Indonesia | `docs/site/**`, `docs/api/**`, `docs/migration/**`, `docs/manifest.md` | audiens utama; istilah API tetap asli (`serverFn`, `ctx`, `env()`) |
-| Paket agen | Inggris | `llms.txt`, `docs/ai/**` | agen membaca istilah teknis Inggris; anti-drift lewat `scripts/ai/check-ai-links.ts` |
+| User documentation | Indonesian | `docs/site/**`, `docs/api/**`, `docs/migration/**`, `docs/manifest.md` | primary audience; API terms stay as-is (`serverFn`, `ctx`, `env()`) |
+| Agent pack | English | `llms.txt`, `docs/ai/**` | agents read English technical terms; anti-drift via `scripts/ai/check-ai-links.ts` |
 
-Aturan label (sidebar & judul): kalimat deskriptif berbahasa Indonesia;
-identitas API dan jargon baku (build, deploy, auth, CSRF, routing, loader,
-`serverFn`, `ctx`, rate limit) tidak diterjemahkan.
+Label rules (sidebar & headings): descriptive sentences in Indonesian;
+API identities and standard jargon (build, deploy, auth, CSRF, routing, loader,
+`serverFn`, `ctx`, rate limit) are not translated.
 
-**Terjemahan EN (2026-10-15, selesai)**: i18n Starlight aktif —
-`defaultLocale: "root"` (ID) + locale `en`, konten EN di `docs/site-en/**`
-(dipetakan generator ke `src/content/docs/en/**`), label sidebar per-locale via
-`translations`. **Seluruh 20 halaman situs** punya padanan EN
-(`index`, `keamanan`, `mulai/*` 2, `dasar/*` 7, `panduan/*` 10); halaman ID lain
-(`docs/api`, `docs/migration`, `docs/ai`) jatuh ke fallback locale root.
-Sebaliknya `docs/ai/**` sengaja EN tanpa padanan ID (paket agen).
+**EN translation (2026-10-15, done)**: Starlight i18n is active —
+`defaultLocale: "root"` (ID) + locale `en`, EN content in `docs/site-en/**`
+(mapped by the generator to `src/content/docs/en/**`), per-locale sidebar labels
+via `translations`. **All 20 site pages** have an EN counterpart
+(`index`, `keamanan`, `mulai/*` 2, `dasar/*` 7, `panduan/*` 10); other ID pages
+(`docs/api`, `docs/migration`, `docs/ai`) fall back to the root locale.
+Conversely, `docs/ai/**` is deliberately EN with no ID counterpart (the agent
+pack).
 
-## 9. Struktur & pedoman dokumentasi
+## 9. Documentation structure & guidelines
 
-Struktur situs mengikuti **Diátaxis** (tutorial → how-to → reference →
-explanation) dan gaya **Google developer documentation style guide** — peta
-lengkap + alasan di `docs/decisions/0025-docs-ia.md`. Aturan praktis:
+The site structure follows **Diátaxis** (tutorial → how-to → reference →
+explanation) and the **Google developer documentation style guide** — the full
+map + rationale in `docs/decisions/0025-docs-ia.md`. Practical rules:
 
-- Riwayat internal (keputusan, catatan milestone) **tidak diterbitkan**:
-  `docs/decisions/**`, `docs/milestones/**` hidup di repo saja.
-- Materi baru diletakkan pada kuadran yang tepat: "Mulai" (tutorial),
-  "Panduan" (how-to), "Referensi" (reference), "Konsep"/"Arsitektur"
-  (explanation); contoh eksternal di "Contoh".
-- Setiap halaman situs punya padanan EN (`docs/site-en/**`) dengan label
-  sidebar per-locale; halaman non-situs jatuh ke fallback locale root.
+- Internal history (decisions, milestone notes) is **not published**:
+  `docs/decisions/**`, `docs/milestones/**` live in the repo only.
+- New material goes in the right quadrant: "Start" (tutorial),
+  "Guides" (how-to), "Reference", "Concepts"/"Architecture"
+  (explanation); external examples under "Examples".
+- Every site page has an EN counterpart (`docs/site-en/**`) with per-locale
+  sidebar labels; non-site pages fall back to the root locale.
 
-## 10. Penutup
+## 10. Closing
 
-Framework lain mengatakan: *"Kami membuat type-safety end-to-end."*
-Moons mengatakan: *"Kami membuat kebocoran kode server ke client mustahil.
-Kalau kami gagal, kami tidak pantas ada."* 
+Other frameworks say: *"We make type safety end-to-end."*
+Moons says: *"We make leaking server code to the client impossible.
+If we fail, we do not deserve to exist."*
 
-Kalau Anda menemukan satu jalur yang bisa mengakali itu bukan bug biasa —
-itu alasan proyek ini dihentikan sampai diperbaiki.
+If you find a single path that can bypass this, it is not an ordinary bug —
+it is a reason to stop this project until it is fixed.

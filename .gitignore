@@ -4,6 +4,7 @@ src/content/docs
 public/raw
 public/llms.txt
 public/llms-full.txt
+public/_redirects
 examples/cookbook
 .astro
 *.log

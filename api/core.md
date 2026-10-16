@@ -1,8 +1,8 @@
 # `@moonsjs/core`
 
-Router, pemindaian/typegen route, config, error, serialisasi, dan runner
-loader/middleware. Semua API di bawah diekspor dari `@moonsjs/core` kecuali
-subpath `@moonsjs/core/serialize`.
+Router, route scan/typegen, config, errors, serialization, and the
+loader/middleware runner. All APIs below are exported from `@moonsjs/core`
+except the `@moonsjs/core/serialize` subpath.
 
 ## Config
 
@@ -12,7 +12,7 @@ function defineConfig(config: MoonsConfig): MoonsConfig;
 
 ```ts
 interface MoonsConfig {
-  routesDir: string;                 // wajib di tipe; default runtime "src/routes"
+  routesDir: string;                 // required in the type; runtime default "src/routes"
   context: (req: Request) => Promise<unknown> | unknown;
   middleware?: Middleware[];         // default []
   security?: {
@@ -27,18 +27,18 @@ interface MiddlewareArgs { req: Request; ctx: Ctx; next: () => Promise<Response>
 type Middleware = (args: MiddlewareArgs) => Promise<Response>;
 ```
 
-## Paket server-only 
+## Server-only packages
 
-Gate build di graph client (route/client/shared, transitif) — import langsung,
-`import()` dinamis, `export *`/re-export → `E_FORBIDDEN_SERVER_IMPORT`.
+Build gate on the client graph (route/client/shared, transitively) — direct
+import, dynamic `import()`, `export *`/re-exports → `E_FORBIDDEN_SERVER_IMPORT`.
 
-Paket dianggap server-only bila: (1) ada di **daftar bawaan**, (2) ada di
-`security.serverOnlyPackages`, atau (3) `package.json`-nya memuat
-`"moons": { "serverOnly": true }` (marker). Pencocokan lewat **nama paket hasil
-resolve** (subpath/alias/tsconfig-paths/symlink/workspace ikut tertangkap);
-import **type-only** dikecualikan; `*.server.ts` tidak terpengaruh.
+A package counts as server-only when: (1) it is in the **built-in list**, (2) it
+is in `security.serverOnlyPackages`, or (3) its `package.json` carries
+`"moons": { "serverOnly": true }` (marker). Matching uses the **resolved package
+name** (subpaths/aliases/tsconfig-paths/symlinks/workspaces are all caught);
+**type-only** imports are exempt; `*.server.ts` is unaffected.
 
-Daftar bawaan (minimum; tidak dapat dihapus app):
+Built-in list (minimum; apps cannot remove it):
 
 ```txt
 pg, postgres, mysql, mysql2, sqlite3, better-sqlite3, drizzle-orm,
@@ -47,10 +47,10 @@ argon2, jsonwebtoken, nodemailer, sharp, execa, cross-spawn, dotenv, knex,
 typeorm, sequelize, @libsql/client
 ```
 
-Konstanta runtime: `DEFAULT_SERVER_ONLY_PACKAGES` (`@moonsjs/vite` — dipakai
-`transform.ts`/plugin); katalog error: `moons errors --json`.
+Runtime constant: `DEFAULT_SERVER_ONLY_PACKAGES` (`@moonsjs/vite` — used by
+`transform.ts`/the plugin); error catalog: `moons errors --json`.
 
-## Helper respons (D.2)
+## Response helpers (D.2)
 
 ```ts
 // @moonsjs/core/response (client-safe) — re-export: @moonsjs/react & @moonsjs/server
@@ -58,17 +58,17 @@ setHeader(name, value); appendHeader(name, value);
 setCookie(name, value, options?); deleteCookie(name, options?);
 ```
 
-Request-scoped (AsyncLocalStorage di `@moonsjs/server`:
-`runWithResponseCollector`/`takeResponseMutations`); runtime
-`@moonsjs/vite/server` menerapkan ke respons akhir (HTML, RPC, API, error).
-Error: `E_RESPONSE_HEADER_INVALID`, `E_RESPONSE_OUTSIDE_REQUEST`.
+Request-scoped (AsyncLocalStorage in `@moonsjs/server`:
+`runWithResponseCollector`/`takeResponseMutations`); the
+`@moonsjs/vite/server` runtime applies them to the final response (HTML, RPC,
+API, errors). Errors: `E_RESPONSE_HEADER_INVALID`, `E_RESPONSE_OUTSIDE_REQUEST`.
 
-## Endpoint API (D.1)
+## API endpoints (D.1)
 
-`validateConfig(raw, { file?, projectRoot? })` memvalidasi objek config
-(key tak dikenal, `context` bukan fungsi, `routesDir` tidak ada bila
-`projectRoot` diisi, dsb.) — gagal → `E_CONFIG_INVALID` dengan format 
-Mengembalikan config ternormalisasi (default diterapkan).
+`validateConfig(raw, { file?, projectRoot? })` validates the config object
+(unknown keys, `context` not a function, missing `routesDir` when `projectRoot`
+is set, etc.) — failure → `E_CONFIG_INVALID` in the standard error format.
+Returns the normalized config (defaults applied).
 
 ## Route
 
@@ -90,29 +90,30 @@ interface RouteDefinition {
 interface ResolvedRoute { route: RouteDefinition; layouts: RouteDefinition[]; params: Record<string, string>; }
 ```
 
-Aturan scan/file: `(group)` tidak masuk URL; `[param]`, `[...rest]`
-(wajib segmen terakhir); `_layout` untuk direktori + turunannya; `_error`/`_404`
-root-only; file `_*` lain diabaikan. Catch-all membutuhkan minimal satu segmen.
-Presedensi: static > dynamic > catch-all per segmen.
+Scan/file rules: `(group)` does not appear in the URL; `[param]`, `[...rest]`
+(must be the last segment); `_layout` for a directory + its subtree;
+`_error`/`_404` root-only; other `_*` files are ignored. A catch-all requires
+at least one segment. Precedence: static > dynamic > catch-all per segment.
 
-## Typegen 
+## Typegen
 
 ```ts
 function generateTypes(args: { routesDir: string; configPath: string; outDir: string }): Promise<void>;
 ```
 
-Menulis `.moons/routes.d.ts` (augmentasi `RouteMap` untuk `@moonsjs/react`) dan
-`.moons/context.d.ts` (global `Ctx` + `export type Ctx`). File `routes.d.ts`
-diakhiri `export {}` agar augmentasi berlaku (lihat `../decisions/0002-m1-ssr.md`).
+Writes `.moons/routes.d.ts` (augments `RouteMap` for `@moonsjs/react`) and
+`.moons/context.d.ts` (global `Ctx` + `export type Ctx`). The `routes.d.ts` file
+ends with `export {}` so the augmentation takes effect
+(see `../decisions/0002-m1-ssr.md`).
 
-## Hash serverFn 
+## serverFn hash
 
 ```ts
 function computeFnHash(projectRoot: string, file: string, exportName: string): string; // sha256 16 hex
 function fnRegistryKey(projectRoot: string, file: string, exportName: string): string; // "src/server/x.server.ts#fn"
 ```
 
-## Serialisasi — subpath `@moonsjs/core/serialize`
+## Serialization — the `@moonsjs/core/serialize` subpath
 
 ```ts
 interface SsrPayload { key: string; params: Record<string, string>; data: Record<string, unknown>; error?: unknown; }
@@ -120,11 +121,11 @@ function encodeSsrPayload(payload: SsrPayload): string;  // devalue → JSON.str
 function decodeSsrPayload(text: string): SsrPayload;
 
 interface SerializedError { __moons_error: true; name: string; message: string; stack?: string; }
-function serializeError(error: unknown): SerializedError;  // devalue tidak mendukung Error
+function serializeError(error: unknown): SerializedError;  // devalue does not support Error
 function reviveError(data: SerializedError): Error;
 ```
 
-Subpath ini browser-safe (tanpa `node:*`) dan dipakai client + server.
+This subpath is browser-safe (no `node:*`) and is used by both client and server.
 
 ## Runner
 
@@ -138,10 +139,10 @@ function composeMiddleware(
   middleware: ReadonlyArray<Middleware>,
   ctx: Ctx,
   final: () => Promise<Response>,
-): (req: Request) => Promise<Response>;   // next() wajib tepat sekali → E_INTERNAL
+): (req: Request) => Promise<Response>;   // next() exactly once → E_INTERNAL
 ```
 
-## Error 
+## Errors
 
 ```ts
 class MoonsError extends Error {

@@ -76,7 +76,7 @@ Saran:
   2. Pindahkan helper ke src/shared/
 ```
 
-Kode yang paling sering Anda temui: [`E_SERVER_IMPORT_IN_CLIENT`](/keamanan/),
+Kode yang paling sering Anda temui: [`E_SERVER_IMPORT_IN_CLIENT`](/id/concepts/zero-trust/),
 `E_ENV_IN_CLIENT`, `E_SCHEMA_LOCAL_REF`, `E_ROUTE_CONFLICT`,
 `E_ROUTE_EXPORT_INVALID`, `E_RPC_INVALID_INPUT`.
 

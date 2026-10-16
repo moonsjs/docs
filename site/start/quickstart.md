@@ -46,5 +46,5 @@ bun run start      # production server (NODE_ENV=production)
 | `bunx moons typegen` | Regenerate `.moons/*.d.ts` |
 | `bun test` | Template in-process tests (`createTestServer`) |
 
-Next: [project structure](/en/mulai/struktur-proyek/) ·
-[routing](/en/dasar/routing/).
+Next: [project structure](/start/project-structure/) ·
+[routing](/concepts/routing/).

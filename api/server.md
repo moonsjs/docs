@@ -1,8 +1,8 @@
 # `@moonsjs/server`
 
-`serverFn`, registry, handler RPC `env` dan stub client 
+`serverFn`, registry, RPC handler, `env`, and the client stub
 
-## `serverFn` 
+## `serverFn`
 
 ```ts
 function serverFn<I extends StandardSchemaV1, O extends StandardSchemaV1>(
@@ -26,13 +26,15 @@ interface ServerFn<I, O> {
 }
 ```
 
-- Hanya boleh dideklarasikan di `*.server.ts(x)`; tanpa meta injeksi plugin → `E_INTERNAL`.
-- Dipanggil server-side (loader): in-process memakai `ctx` dari AsyncLocalStorage
- (`runWithContext` di runtime SSR) — tanpa HTTP; validasi input+output 
-- Schema memakai [Standard Schema](https://github.com/standard-schema/standard-schema)
-  (zod ≥3.24 / v4, valibot, dst.).
+- May only be declared in `*.server.ts(x)`; without the plugin-injected metadata
+  → `E_INTERNAL`.
+- Called server-side (from a loader): in-process, using the `ctx` from
+  AsyncLocalStorage (`runWithContext` in the SSR runtime) — no HTTP; input and
+  output are validated on both sides
+- Schemas use [Standard Schema](https://github.com/standard-schema/standard-schema)
+  (zod ≥3.24 / v4, valibot, etc.).
 
-## Registry 
+## Registry
 
 ```ts
 const __moons_registry: Map<string, FnRegistryEntry>;
@@ -43,47 +45,47 @@ function __moons_callInProcess<I = unknown, O = unknown>(hash: string, input: I,
 ```ts
 interface FnRegistryEntry {
   hash: string; file: string;        // posix relatif project root
-  exportName: string; line: number;  // untuk pesan error
+  exportName: string; line: number;  // for error messages
   handler: (args: { input: unknown; ctx: Ctx }) => Promise<unknown>;
   input: StandardSchemaV1; output: StandardSchemaV1;
 }
 ```
 
-`__moons_callInProcess` = jalur (lookup → validasi → handler → validasi).
+`__moons_callInProcess` = the path (lookup → validate → handler → validate).
 
-## Konteks request
+## Request context
 
 ```ts
-function runWithContext<T>(ctx: Ctx, fn: () => T): T;   // dipakai runtime SSR
+function runWithContext<T>(ctx: Ctx, fn: () => T): T;   // used by the SSR runtime
 function getCurrentContext(): Ctx | undefined;
 ```
 
-## `env` 
+## `env`
 
 ```ts
 function env<T = string>(key: string): T;   // process.env / Bun.env
-function isClientRuntime(): boolean;        // tidak ada `process`
+function isClientRuntime(): boolean;        // no `process`
 ```
 
-Dipanggil di client → `E_ENV_IN_CLIENT` (guard runtime; build-time rejection
-oleh transform). Key tidak ada → `undefined` (di-cast ke `T`).
+Called in the client → `E_ENV_IN_CLIENT` (runtime guard; build-time rejection
+by the transform). Missing key → `undefined` (cast to `T`).
 
-## RPC handler — dipakai `@moonsjs/vite/server`
+## RPC handler — used by `@moonsjs/vite/server`
 
 ```ts
 function createRpcHandler(options?: { security?: { originWhitelist?: string[]; bodyLimitBytes?: number } })
   : (request: Request, hash: string, ctx: Ctx) => Promise<Response>;
 ```
 
-Alur & status: method ≠ POST → 405 · tanpa `x-moons: 1` → 400 `E_RPC_MISSING_HEADER` ·
-Origin asing → 403 `E_RPC_BAD_ORIGIN` · body > limit → 413 `E_RPC_BODY_TOO_LARGE` ·
-devalue invalid → 400 `E_RPC_INVALID_INPUT` · hash tak dikenal → 404 `E_INTERNAL` ·
-input gagal schema → 400 `E_RPC_INVALID_INPUT` · handler error → 500 (production:
-pesan generik) · output gagal schema → 500 `E_RPC_INVALID_OUTPUT` · sukses →
-`200 application/x-moons` body devalue. Origin tanpa header = klien non-browser
-(diizinkan); localhost diizinkan saat non-production.
+Flow & statuses: method ≠ POST → 405 · no `x-moons: 1` → 400 `E_RPC_MISSING_HEADER` ·
+foreign Origin → 403 `E_RPC_BAD_ORIGIN` · body > limit → 413 `E_RPC_BODY_TOO_LARGE` ·
+invalid devalue → 400 `E_RPC_INVALID_INPUT` · unknown hash → 404 `E_INTERNAL` ·
+input fails the schema → 400 `E_RPC_INVALID_INPUT` · handler error → 500 (production:
+generic message) · output fails the schema → 500 `E_RPC_INVALID_OUTPUT` · success →
+`200 application/x-moons` with a devalue body. No Origin header = a non-browser
+client (allowed); localhost is allowed when non-production.
 
-## Stub client — subpath `@moonsjs/server/client`
+## Client stub — the `@moonsjs/server/client` subpath
 
 ```ts
 function __moons_createStub<I extends StandardSchemaV1, O extends StandardSchemaV1>(
@@ -91,20 +93,21 @@ function __moons_createStub<I extends StandardSchemaV1, O extends StandardSchema
 ): ServerFn<I, O>;
 ```
 
-Dipakai stub hasil transform Saat dipanggil: validasi input (client) →
-bila `globalThis.__moons_ssr === true` dan hook tersedia → in-process →
-selain itu `POST /_moons/fn/<hash>` (`x-moons: 1`, `application/x-moons`) →
-validasi output (client).
+Used by the transform-generated stub. When called: input validation (client) →
+if `globalThis.__moons_ssr === true` and the hook is available → in-process →
+otherwise `POST /_moons/fn/<hash>` (`x-moons: 1`, `application/x-moons`) →
+output validation (client).
 
-## Validasi Standard Schema
+## Standard Schema validation
 
 ```ts
 function validateSchema<S extends StandardSchemaV1>(schema: S, value: unknown)
   : Promise<{ ok: true; value: InferOutput<S> } | { ok: false; issues: string[] }>;
 ```
 
-## Catatan internal
+## Internal notes
 
-- Prefiks `__moons_` = internal framework; stub memakai subpath `/client`
-  agar handler server tidak ikut ke bundle client.
-- Race `serverFn` tanpa ctx aktif → `E_INTERNAL` dengan saran memanggil dari loader.
+- The `__moons_` prefix = framework-internal; the stub uses the `/client`
+  subpath so the server handler does not end up in the client bundle.
+- Calling `serverFn` with no active ctx → `E_INTERNAL` with a suggestion to call
+  it from a loader.

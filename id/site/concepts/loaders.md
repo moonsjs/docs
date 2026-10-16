@@ -47,4 +47,4 @@ export const loader = async () => ({
 ## Error di loader
 
 Loader yang melempar error merender `_error.tsx` dengan status 500. Lihat
-[Error & 404](/dasar/error/).
+[Error & 404](/id/concepts/errors/).

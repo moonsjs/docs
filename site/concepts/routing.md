@@ -48,4 +48,4 @@ export default async function adminGuard({ ctx, next }: MiddlewareArgs): Promise
 ## Raw HTTP endpoints
 
 `src/api/**/*.ts` adds non-page endpoints — see
-[API endpoints](/en/panduan/api-routes/).
+[API endpoints](/guides/api-routes/).

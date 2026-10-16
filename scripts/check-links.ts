@@ -10,7 +10,7 @@ const COOKBOOK_BASE = "https://github.com/moonsjs/cookbook/blob/main/";
 const cookbookDir = join(repoRoot, "examples", "cookbook");
 
 const targets: string[] = [join(repoRoot, "llms.txt")];
-for (const pattern of ["ai/**/*.md", "site/**/*.md", "site-en/**/*.md"]) {
+for (const pattern of ["ai/**/*.md", "site/**/*.md", "id/**/*.md"]) {
   const glob = new Bun.Glob(pattern);
   for (const relative of await Array.fromAsync(glob.scan({ cwd: repoRoot }))) {
     targets.push(join(repoRoot, relative));

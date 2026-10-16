@@ -1,29 +1,29 @@
-# Migrasi dari Next.js
+# Migrating from Next.js
 
-> Non-blocking. Moons v1 menargetkan aplikasi SSR + data loader +
-> RPC ter-tipe — bukan pengganti 1:1 Next.js.
+> Non-blocking. Moons v1 targets SSR + data loader +
+> typed RPC apps — it is not a 1:1 Next.js replacement.
 
-## Pemetaan konsep
+## Concept mapping
 
 | Next.js | Moons |
 |---|---|
 | `app/users/[id]/page.tsx` | `src/routes/users/[id].tsx` (`export default`) |
-| `app/layout.tsx` (root/nested) | `_layout.tsx` di direktori route |
+| `app/layout.tsx` (root/nested) | `_layout.tsx` in the route directory |
 | `not-found.tsx` | `_404.tsx` (root) |
 | `error.tsx` (error boundary) | `_error.tsx` (root; `useRouteError()`) |
-| `getServerSideProps` / Server Component async | `export const loader` + `useLoaderData<typeof loader>()` |
-| Server Actions (`'use server'`) | `serverFn({ input, output, handler })` di `*.server.ts` |
-| Route Handlers `app/api/.../route.ts` | `serverFn` (RPC; bukan REST) |
+| `getServerSideProps` / async Server Component | `export const loader` + `useLoaderData<typeof loader>()` |
+| Server Actions (`'use server'`) | `serverFn({ input, output, handler })` in `*.server.ts` |
+| Route Handlers `app/api/.../route.ts` | `serverFn` (RPC; not REST) |
 | `NEXT_PUBLIC_API_URL` | `import.meta.env.VITE_API_URL` (Vite) |
 | `process.env.SECRET` (server) | `env("SECRET")` (`@moonsjs/server`, server-only) |
-| `next/link` | `Link` dari `@moonsjs/react` (`to` + `params`, key gaya file) |
+| `next/link` | `Link` from `@moonsjs/react` (`to` + `params`, file-style key) |
 | `useParams()` (client) | `useParams<"/users/[id]">()` |
-| `metadata` export | `meta` boleh diekspor (validasi) tetapi **belum dirender v1** — pakai `index.html` |
-| Streaming / Suspense / RSC | **Non-tujuan v1** — jangan direncanakan |
-| `public/` | `public/` Vite (disalin ke `dist/client`) |
+| `metadata` export | `meta` may be exported (validated) but it is **not yet rendered in v1** — use `index.html` |
+| Streaming / Suspense / RSC | **Non-goal in v1** — do not plan for it |
+| `public/` | Vite `public/` (copied to `dist/client`) |
 | `next build && next start` | `moons build && moons start` (Bun/Node) |
 
-## Contoh: halaman data + mutasi
+## Example: a data page + a mutation
 
 **Next.js**
 
@@ -75,22 +75,22 @@ export default function UserPage() {
 }
 ```
 
-Mutasi tidak memakai form action: panggil `serverFn` dari client
-(`await renameUser({ input: { id, name } })`) — validasi schema di kedua sisi.
+Mutations do not use form actions: call the `serverFn` from the client
+(`await renameUser({ input: { id, name } })`) — schema validation on both sides.
 
-## Yang tidak dipetakan (non-tujuan)
+## What is not mapped (non-goals)
 
-- React Server Components, streaming SSR, Suspense progresif.
-- Route handlers REST / OpenAPI; gunakan `serverFn` per operasi.
-- Image/font optimization, metadata API kompleks, middleware per-route.
-- Cache/revalidasi tingkat framework (v1 tidak ada API cache).
-- Auth/session/cookie API (v1 tidak ada — tangani lewat `serverFn` + header).
+- React Server Components, streaming SSR, progressive Suspense.
+- REST / OpenAPI route handlers; use `serverFn` per operation.
+- Image/font optimization, a complex metadata API, per-route middleware.
+- Framework-level caching/revalidation (v1 has no cache API).
+- Auth/session/cookie API (v1 has none — handle it via `serverFn` + headers).
 
-## Checklist pasca-migrasi
+## Post-migration checklist
 
-1. `moons typegen` (atau build) → pastikan `.moons/*.d.ts` ter-include tsconfig.
-2. `bun run tsc --noEmit` hijau (mis. schema drift antar route/server).
-3. Audit env: semua akses rahasia lewat `env()` di `*.server.ts`.
-4. Pastikan tidak ada import `node:*` di modul client.
-5. Jalankan alur CI dugaan Anda → leak test `scripts/m2/test-leak.sh` sebagai
-   pola (tambahkan canary di app Anda via `leakTest.canary`).
+1. `moons typegen` (or build) → make sure `.moons/*.d.ts` is included in tsconfig.
+2. `bun run tsc --noEmit` green (e.g. schema drift between route/server).
+3. Audit env: all secret access goes through `env()` in `*.server.ts`.
+4. Make sure there are no `node:*` imports in client modules.
+5. Run your expected CI flow → leak test `scripts/m2/test-leak.sh` as a
+   pattern (add a canary to your app via `leakTest.canary`).
