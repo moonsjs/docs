@@ -53,3 +53,7 @@ export const revalidate = 60; // seconds; 0 = regenerate on every request
 - Invalid value or `revalidate` without `prerender` → `E_ISR_INVALID`.
 - Single-instance limitation: use a CDN/reverse proxy or a shared store for
   multi-instance setups; no programmatic invalidation yet.
+
+## Multiple instances
+
+Each instance keeps its own files by default, so regenerations do not propagate. Configure a shared `isr.storage` (a `PrerenderStorage` with `read`/`write`) to serve and regenerate pages across instances — see the Vite reference for the shape.

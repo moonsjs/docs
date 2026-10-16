@@ -68,3 +68,7 @@ export const revalidate = 60; // detik; 0 = selalu diregenerasi saat request
 - Batasan: single-instance (multi-instance → CDN/reverse proxy atau store
   bersama); belum ada invalidasi terprogram (`refresh()` tetap request-scoped).
 - Pratinjau: file `_moons_prerender.json` (v2) menyimpan `revalidate` per path.
+
+## Beberapa instance
+
+Secara bawaan tiap instance menyimpan file sendiri, sehingga hasil regenerasi tidak menyebar. Konfigurasikan `isr.storage` bersama (sebuah `PrerenderStorage` dengan `read`/`write`) agar penyajian dan regenerasi berlaku lintas instance — lihat referensi Vite untuk bentuknya.
