@@ -37,6 +37,7 @@ Key opsional yang menghasilkan berkas produksi dan perilaku runtime:
 - `robots` — `{ sitemap?, disallow? }`; menulis `robots.txt`.
 - `hooks` — `onRequest`, `onResponse` (boleh mengembalikan `Response` pengganti), `onError`.
 - `isr` — `{ storage? }`; `PrerenderStorage` bersama untuk file prerender (ISR multi-instance; lihat halaman Vite).
+- `logging` — `{ accessLog?, json?, redact? }`; log akses runtime terstruktur (JSON default; `moons dev` menulis `.moons/dev.log` terkelola CLI), `redact` = daftar query-param yang nilainya menjadi `[redacted]`. Default: senyap.
 
 ```ts
 export default defineConfig({

@@ -16,6 +16,8 @@ The React API reference (`useSearchParams`, `refresh`, `Link search`) lives in
 | `explain_error` | `{ code }` | Catalog: trigger + details + suggestions (`found=false` + `validCodes` when unknown) |
 | `audit` | — | Result of `moons audit --json` (security checks + counts) |
 | `run_typegen` | — | Runs typegen; returns `{ ok, outDir: ".moons" }` |
+| `scaffold_route` | `{ route, kind?, loader? }` | Creates `src/routes/<route>.tsx` (page, optional sample loader) or `src/api/<route>.ts` (GET handler) following the framework conventions; **never overwrites** an existing file |
+| `tail_dev_logs` | `{ lines? }` | Last N lines (default 50, max 500) of the CLI-managed dev log `.moons/dev.log` (written by `moons dev`) |
 
 All tools are deterministic; there are no LLM calls in the framework.
 

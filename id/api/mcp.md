@@ -16,6 +16,8 @@ Referensi API React (`useSearchParams`, `refresh`, `Link search`) ada di
 | `explain_error` | `{ code }` | Katalog: trigger + details + suggestions (`found=false` + `validCodes` bila tak dikenal) |
 | `audit` | — | Hasil `moons audit --json` (check keamanan + counts) |
 | `run_typegen` | — | Menjalankan typegen; mengembalikan `{ ok, outDir: ".moons" }` |
+| `scaffold_route` | `{ route, kind?, loader? }` | Membuat `src/routes/<route>.tsx` (page, loader contoh opsional) atau `src/api/<route>.ts` (handler GET) mengikuti konvensi framework; **tidak pernah menimpa** file yang ada |
+| `tail_dev_logs` | `{ lines? }` | N baris terakhir (default 50, maks 500) dari log dev terkelola CLI `.moons/dev.log` (ditulis `moons dev`) |
 
 Semua tool deterministik; tidak ada panggilan LLM di framework.
 
