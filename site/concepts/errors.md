@@ -12,7 +12,7 @@ Every framework error follows:
 [moons] E_SERVER_IMPORT_IN_CLIENT — src/routes/x.tsx:3
 importing `readFileSync` from `node:fs` in a client module
 Details: modules that are server-only may only be imported from *.server.ts.
-Suggestions:
+Suggestion:
   1. Move the operation into a serverFn
   2. Remove the import
 ```

@@ -13,7 +13,7 @@ upayanya menggagalkan build.
    **stub RPC** (hanya schema + hash). Isi handler, helper, dan import
    server-only dibuang.
 2. **Rejection build** — import ilegal menggagalkan build dengan format
-   `[moons] CODE` + `Saran:`:
+   `[moons] CODE` + `Suggestion:`:
    - nilai non-serverFn dari `*.server.ts` → `E_SERVER_IMPORT_IN_CLIENT`
    - `env()` di modul client → `E_ENV_IN_CLIENT`
    - import `node:*`/`bun:*` di modul client → `E_FORBIDDEN_SERVER_IMPORT`
@@ -74,7 +74,7 @@ Import paket npm server-only dari modul client **menggagalkan build**
 [moons] E_FORBIDDEN_SERVER_IMPORT — src/routes/x.tsx:2
 mengimpor `pg` — paket server-only `pg`
 Sumber kecocokan: daftar bawaan paket server-only framework.
-Saran:
+Suggestion:
   1. Pindahkan operasi tersebut ke `*.server.ts` dan panggil lewat serverFn
   2. Atau ganti/hapus import tersebut di modul client
 ```

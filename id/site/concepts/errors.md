@@ -71,7 +71,7 @@ Semua error memakai format yang sama — kode mesin + lokasi + saran:
 src/routes/about.tsx:3
   export `helper` tidak diizinkan di modul route
 
-Saran:
+Suggestion:
   1. Hapus export tambahan, atau
   2. Pindahkan helper ke src/shared/
 ```
@@ -81,4 +81,4 @@ Kode yang paling sering Anda temui: [`E_SERVER_IMPORT_IN_CLIENT`](/id/concepts/z
 `E_ROUTE_EXPORT_INVALID`, `E_RPC_INVALID_INPUT`.
 
 > Jangan menambal error build dengan melemahkan plugin/canary — itu justru
-> melanggar jaminan zero-trust. Ikuti `Saran:` yang diberikan.
+> melanggar jaminan zero-trust. Ikuti `Suggestion:` yang diberikan.
