@@ -1,0 +1,22 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Clone cookbook (verifikasi tautan resep)
+        uses: actions/checkout@v5
+        with:
+          repository: moonsjs/cookbook
+          path: examples/cookbook
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - run: bun run check
+      - run: bun run build

@@ -1,0 +1,20 @@
+{
+  "name": "moonsjs-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun scripts/build.ts && astro build",
+    "check": "bun scripts/check-public.ts && bun scripts/check-links.ts",
+    "dev": "bun scripts/build.ts && astro dev",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "0.42.6",
+    "astro": "7.3.8",
+    "starlight-links-validator": "0.27.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.3",
+    "typescript": "^7.0.2"
+  }
+}

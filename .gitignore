@@ -1,0 +1,9 @@
+node_modules
+dist
+src/content/docs
+public/raw
+public/llms.txt
+public/llms-full.txt
+examples/cookbook
+.astro
+*.log
