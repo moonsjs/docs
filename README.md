@@ -29,6 +29,13 @@ bun run build   # generate + astro build → dist/
 ## Deploy
 
 Cloudflare Pages: repository `moonsjs/docs`, build command
-`bun install && bun run build`, output `dist`, env `BUN_VERSION=1.4.2`.
+`bun install && bun run build`, output `dist`.
+
+> **Catatan lockfile:** `bun.lock` sengaja ditulis dalam format
+> `lockfileVersion: 1` agar kompatibel dengan image Cloudflare Pages
+> (bun 1.2.15) sekaligus tetap dibaca bun 1.4.x di CI. Jalankan
+> `bun install --frozen-lockfile` (jangan `bun install` polos) supaya lockfile
+> tidak di-upgrade otomatis ke v2. Bila Pages disetel `BUN_VERSION=1.4.2`,
+> lockfile boleh diregenerasi ke v2.
 
 Bugs dan permintaan: buka Issue di repo ini.
