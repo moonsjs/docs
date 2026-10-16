@@ -40,13 +40,23 @@ git clone --depth 1 https://github.com/moonsjs/cookbook ../moons-cookbook
 
 ## Deploy
 
-Cloudflare Pages: repository `moonsjs/docs`, build command
-`bun install && bun run build`, output `dist`.
+Cloudflare Pages: repository `moonsjs/docs`, output `dist`.
 
-> **Wajib:** set env **`BUN_VERSION=1.4.2`** di Cloudflare Pages (Production &
-> Preview). Image bawaan CF memakai bun 1.2.15 yang **tidak bisa mem-parse kode
-> minified React 19.3** (`else a: if` → parser error), sehingga prerender gagal.
-> Lockfile repo ini `lockfileVersion: 1` agar tetap terbaca bun lama bila env
-> belum diset.
+**Build command** (ganti di Settings → Build configuration):
+
+```bash
+curl -fsSL https://bun.sh/install | bash -s "bun-v1.4.2" && export PATH="$HOME/.bun/bin:$PATH" && bun install --frozen-lockfile && bun run build
+```
+
+Perintah ini mem-bootstrap **bun 1.4.2** karena `moons build` menjalankan Vite
+dan prerender via bun (desain framework), sedangkan image bawaan Cloudflare
+memakai bun 1.2.15 yang **tidak bisa mem-parse kode minified React 19.3**
+(`else a: if` → parser error) sehingga prerender gagal. Lockfile repo ini
+`lockfileVersion: 1` + `bunfig.toml` `linker = "hoisted"` agar konsisten
+antarversi bun.
+
+Alternatif tanpa mengubah command: set env **`BUN_VERSION=1.4.2`**
+(Production & Preview). Guard `scripts/prepare-content.ts` akan gagal cepat
+dengan pesan jelas bila bun < 1.4.
 
 Bugs dan permintaan: buka Issue di repo ini.
