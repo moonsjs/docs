@@ -50,6 +50,27 @@ docker run -p 3000:3000 --env-file .env my-app
   menjalankan `bun dist/server/index.js` dengan `NODE_ENV=production`.
 - Health check container: `GET /_moons/health`.
 
+## Di belakang reverse proxy (TLS)
+
+Bila TLS dihentikan proxy (nginx, Caddy, Cloudflare, load balancer), aktifkan:
+
+```ts
+// moons.config.ts
+security: { trustProxy: true }
+```
+
+agar URL request — dan origin check RPC — mengikuti `x-forwarded-proto` dan
+`x-forwarded-host`. Aktifkan **hanya** bila semua request memang lewat proxy
+yang menimpa header tersebut; dengan default (`false`) header diabaikan
+(kebal spoofing). Tanpa `trustProxy`, RPC dari browser di belakang proxy TLS
+ditolak `E_RPC_BAD_ORIGIN` (origin `https:` tidak akan pernah sama dengan URL
+request internal `http:`).
+
+Apa pun nilai `trustProxy`, server selalu menimpa `x-moons-client-ip` dengan
+alamat klien tepercaya: entri pertama `x-forwarded-for` bila `trustProxy`
+aktif, selain itu alamat socket. Pakai nilainya (lewat `getClientIp`) untuk
+rate limit — lihat panduan [rate limit](/id/guides/rate-limit/).
+
 ## Checklist produksi
 
 1. `bunx moons check` hijau di CI, leak test merah = merge dilarang.

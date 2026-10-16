@@ -24,7 +24,8 @@ proyek**: kalau transform bisa diakali, framework ini dusta.
 2. Import asli `*.server.ts` selain stub RPC.
 3. Import `node:*`, `bun:*`, atau modul server-only.
 4. Nilai `env()`.
-5. Konstanta/string/komentar server.
+5. Konstanta/string/komentar server — kecuali ekspresi yang memang publik by
+   contract (schema `serverFn`; lihat bagian Batas jujur).
 6. Isi file `*.server.ts` asli (hanya stub).
 
 Ditegakkan tiga lapis: **transform build-time**, **rejection build-time**,
@@ -92,11 +93,19 @@ dan unit test transform.
 | Body handler di client | Bergantung tree-shaking | Handler diganti stub secara struktural; tidak ada jalur "handler utuh" |
 | Dynamic import | Umumnya tidak ditegakkan | Ditolak (`E_SERVER_IMPORT_IN_CLIENT`) kecuali branch `DEV` yang mati saat build |
 | Env privat | Uji disiplin penamaan | `env()` server-only; dipanggil di client → `E_ENV_IN_CLIENT` (build + runtime) |
-| Validasi batas | Opsional per proyek | Wajib schema `input`/`output` di kedua sisi |
+| Validasi batas | Opsional per proyek | Wajib schema `input`/`output` di kedua sisi (schema publik) |
+| Config & direktori server-only | Tidak ditegakkan | Impor nilai dari `moons.config.ts` / `src/server/**` menggagalkan build (`E_FORBIDDEN_SERVER_IMPORT`) |
 | Bukti kebocoran | Test milik tim | Leak test framework-level wajib hijau; merah = merge dilarang |
 
 ## 7. Batas jujur
 
+- Schema `serverFn` **publik by contract**: literal dan pesan di dalam
+  `input`/`output` terkirim ke client untuk validasi dua sisi. Merujuk deklarasi
+  lokal atau nilai dari `*.server.ts` lain menggagalkan build
+  (`E_SCHEMA_LOCAL_REF` / `E_SCHEMA_SERVER_REF`).
+- Suffix `.server.ts` adalah jaminan utama; `src/server/**` dan
+  `moons.config.ts` dijaga tambahan. File tanpa suffix di lokasi lain mengikuti
+  kontrak publik/privat modul tempat Anda menaruhnya.
 - Kode yang ditulis di modul client **memang untuk client** — Moons tidak
   menyembunyikan apa yang Anda taruh di sana.
 - Plugin berjalan di dalam pipeline Vite (route, middleware, konteks); bukan

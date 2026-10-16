@@ -31,6 +31,28 @@ docker run -p 3000:3000 --env-file .env my-app
 - Runtime stage: only `package.json`, `node_modules`, `dist`; runs
   `bun dist/server/index.js` with `NODE_ENV=production`.
 
+## Behind a reverse proxy (TLS)
+
+When TLS terminates at a proxy (nginx, Caddy, Cloudflare, a load balancer),
+enable:
+
+```ts
+// moons.config.ts
+security: { trustProxy: true }
+```
+
+so the request URL — and the RPC origin check — follows `x-forwarded-proto` and
+`x-forwarded-host`. Enable it **only** when every request really passes through
+the proxy that overwrites those headers; with the default (`false`) the headers
+are ignored, which is spoof-safe. Without `trustProxy`, browser RPC behind a
+TLS proxy is rejected with `E_RPC_BAD_ORIGIN` (the `https:` origin can never
+equal the internal `http:` request URL).
+
+Regardless of `trustProxy`, the server always overwrites `x-moons-client-ip`
+with the trusted client address: the first `x-forwarded-for` entry when
+`trustProxy` is on, otherwise the socket address. Use it (via `getClientIp`)
+for rate limiting — see the [rate limiting](/guides/rate-limit/) guide.
+
 ## Production checklist
 
 - [ ] `bun run check` green (no skipped steps).

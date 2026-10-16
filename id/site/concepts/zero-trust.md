@@ -18,6 +18,8 @@ upayanya menggagalkan build.
    - `env()` di modul client → `E_ENV_IN_CLIENT`
    - import `node:*`/`bun:*` di modul client → `E_FORBIDDEN_SERVER_IMPORT`
    - schema serverFn yang merujuk deklarasi lokal → `E_SCHEMA_LOCAL_REF`
+   - schema serverFn yang merujuk nilai dari file server lain → `E_SCHEMA_SERVER_REF`
+   - impor nilai dari `moons.config.ts` atau `src/server/**` → `E_FORBIDDEN_SERVER_IMPORT`
 3. **Canary leak test** — setel `leakTest.canary` di `vite.config.ts`; bila
    string itu muncul di output client, build gagal. Di CI, leak test dianggap
    tes sacred: merah = merge dilarang.
@@ -29,9 +31,22 @@ upayanya menggagalkan build.
 | Semua file `src/routes/**`, `src/client/**`, `src/shared/**` | Isi `src/server/*.server.ts` |
 | **Data loader** (di-embed ke HTML!) | `env()`, kredensial, akses DB |
 | Nilai `import.meta.env.VITE_*` | `ctx` (context server-side) |
+| **Schema `serverFn`** (ekspresi `input`/`output`) | Nilai yang dirujuk schema — ditolak saat build (`E_SCHEMA_*`) |
 
 > Kesalahan paling umum: mengira loader "aman". Data loader muncul di payload
 > HTML — jangan pernah mengembalikan rahasia dari loader.
+
+Dua kontrak yang perlu dinyatakan terbuka:
+
+- **Schema itu publik.** Client menyimpan schema `input`/`output` tiap
+  `serverFn` untuk validasi dua sisi — semua literal dan pesan di dalam schema
+  terkirim ke browser. Jangan menaruh rahasia di schema; validasikan di handler.
+  Merujuk deklarasi lokal atau nilai dari `*.server.ts` lain di schema
+  menggagalkan build (`E_SCHEMA_LOCAL_REF` / `E_SCHEMA_SERVER_REF`).
+- **`src/server/**` dan `moons.config.ts` server-only.** Mengimpor nilai dari
+  keduanya di modul client menggagalkan build (`E_FORBIDDEN_SERVER_IMPORT`).
+  `import type` selalu diizinkan — tipe terhapus saat kompilasi, termasuk dari
+  `*.server.ts`.
 
 ## Paket server-only 
 
@@ -52,7 +67,8 @@ Import paket npm server-only dari modul client **menggagalkan build**
   ikut tertangkap.
 - **Way out** yang sah: pindahkan import ke `*.server.ts` dan panggil lewat
   `serverFn`, atau impor **type-only** (`import type ...`) yang terhapus saat
-  kompilasi.
+  kompilasi — hal yang sama berlaku untuk impor dari `*.server.ts`: type-only
+  diizinkan, impor nilai tidak.
 
 ```txt
 [moons] E_FORBIDDEN_SERVER_IMPORT — src/routes/x.tsx:2

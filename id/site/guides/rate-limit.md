@@ -1,64 +1,57 @@
 ---
-description: "Rate limit sebagai middleware global (fixed-window, 429 + retry-after) — bukan fitur core; catatan multi-instance."
+description: "Rate limit sebagai middleware global dengan limiter bawaan @moonsjs/server (sliding window, 429 + retry-after) — bukan fitur core; catatan multi-instance."
 ---
 
 # Rate limit
 
 Rate limit **bukan fitur core** (tidak ada `security.rateLimit`) — polanya
 adalah **middleware global** yang membungkus semua request, termasuk RPC.
-
-## Pola kanonik (cookbook, diuji CI)
-
-```ts
-// src/shared/rate-limit.ts — fixed-window in-memory, tanpa dependensi
-export function createRateLimiter(options: { limit: number; windowMs: number }) {
-  const hits = new Map<string, { count: number; resetAt: number }>();
-  return (key: string) => {
-    const now = Date.now();
-    const entry = hits.get(key);
-    if (entry === undefined || now >= entry.resetAt) {
-      hits.set(key, { count: 1, resetAt: now + options.windowMs });
-      return { ok: true, retryAfterMs: 0 };
-    }
-    if (entry.count >= options.limit) return { ok: false, retryAfterMs: entry.resetAt - now };
-    entry.count += 1;
-    return { ok: true, retryAfterMs: 0 };
-  };
-}
-```
+`@moonsjs/server` sudah menyediakan limiter-nya; tidak perlu menulis sendiri:
 
 ```ts
-// moons.config.ts — pasang di rantai middleware global
+// moons.config.ts
+import { defineConfig } from "@moonsjs/core";
+import { createRateLimiter, getClientIp } from "@moonsjs/server";
+
 const rpcLimiter = createRateLimiter({ limit: 30, windowMs: 1_000 });
 
-middleware: [
-  async ({ req, next }) => {
-    const url = new URL(req.url);
-    if (url.pathname.startsWith("/_moons/fn/")) {
-      const key = req.headers.get("x-forwarded-for") ?? "local";
-      const decision = rpcLimiter(key);
-      if (!decision.ok) {
-        return new Response("rate limit terlampaui", {
-          status: 429,
-          headers: { "retry-after": String(Math.ceil(decision.retryAfterMs / 1000)) },
-        });
+export default defineConfig({
+  context: async (req) => ({}),
+  middleware: [
+    async ({ req, next }) => {
+      if (new URL(req.url).pathname.startsWith("/_moons/fn/")) {
+        const decision = rpcLimiter.check(getClientIp(req) ?? "unknown");
+        if (!decision.ok) {
+          return new Response("rate limit terlampaui", {
+            status: 429,
+            headers: {
+              "retry-after": String(Math.max(1, Math.ceil(decision.retryAfterMs / 1_000))),
+            },
+          });
+        }
       }
-    }
-    return next();
-  },
-],
+      return next();
+    },
+  ],
+});
 ```
 
-Kode ini hidup dan diuji: [cookbook `moons.config.ts`](https://github.com/moonsjs/cookbook/blob/main/moons.config.ts) ·
-[`rate-limit.ts`](https://github.com/moonsjs/cookbook/blob/main/src/shared/rate-limit.ts).
+Kode ini hidup dan diuji: [cookbook `moons.config.ts`](https://github.com/moonsjs/cookbook/blob/main/moons.config.ts).
 
-## Catatan produksi
+## Kunci dan keamanan
 
-- In-memory hanya benar untuk **satu instance**. Multi-instance / serverless →
-  limiter di **reverse proxy** (Cloudflare, nginx, Traefik) atau store bersama
-  (Redis) — jangan tambahkan dependensi ke core untuk ini.
-- Kunci yang wajar: IP (`x-forwarded-for`) untuk RPC publik, atau identitas
-  sesi (`ctx.demoUser`) untuk aksi per-user.
+- **`getClientIp(req)` adalah kunci kanonik.** Ia membaca `x-moons-client-ip`
+  yang **selalu ditimpa server** (nilai dari klien dibuang): entri pertama
+  `x-forwarded-for` bila `security.trustProxy` aktif, selain itu alamat socket.
+  **Jangan pernah memakai `x-forwarded-for` mentah** — header itu dikendalikan
+  klien dan bisa diputar sesuka hati.
+- `createRateLimiter` in-memory (satu proses). Multi-instance: letakkan limiter
+  di **reverse proxy** (Cloudflare/nginx) atau pakai store bersama (Redis);
+  tiru kontrak `check(key)` (`ok` / `remaining` / `retryAfterMs`) di store itu.
+- Memori dibatasi `maxKeys` (default 10.000): melewatinya, kunci tertua
+  dievakuasi (FIFO) — pemutaran kunci oleh penyerang bisa mengusir riwayat
+  kunci lain. Pakai kunci tepercaya ber-kardinalitas rendah; untuk trafik
+  adversarial, gunakan store bersama.
 - Selalu sertakan `retry-after`; 429 tanpa header menyulitkan klien yang patuh.
 
 ## Untuk agen AI

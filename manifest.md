@@ -24,7 +24,8 @@ transform can be bypassed, this framework is a lie.
 2. Real `*.server.ts` imports other than the RPC stub.
 3. `node:*`, `bun:*`, or server-only module imports.
 4. `env()` values.
-5. Server constants/strings/comments.
+5. Server constants/strings/comments — except expressions that are public by
+   contract (`serverFn` schemas; see the honest limits below).
 6. The contents of real `*.server.ts` files (stubs only).
 
 Enforced in three layers: the **build-time transform**, the **build-time
@@ -93,11 +94,20 @@ tests, and transform unit tests.
 | Handler bodies on the client | Depends on tree-shaking | Handlers are structurally replaced by stubs; there is no "whole handler" path |
 | Dynamic imports | Usually not enforced | Rejected (`E_SERVER_IMPORT_IN_CLIENT`) unless the branch is `DEV`-dead at build time |
 | Private env | A naming-discipline test | `env()` is server-only; called in the client → `E_ENV_IN_CLIENT` (build + runtime) |
-| Boundary validation | Optional per project | Required `input`/`output` schemas on both sides |
+| Boundary validation | Optional per project | Required `input`/`output` schemas on both sides (schemas are public) |
+| Server-only config & dirs | Not enforced | Value imports from `moons.config.ts` / `src/server/**` fail the build (`E_FORBIDDEN_SERVER_IMPORT`) |
 | Leak evidence | The team's own tests | The framework-level leak test must be green; red = merge forbidden |
 
 ## 7. Honest limits
 
+- `serverFn` schemas are **public by contract**: literals and messages inside
+  `input`/`output` ship to the client for two-sided validation. Referencing a
+  local declaration or a value imported from another `.server.ts` fails the
+  build (`E_SCHEMA_LOCAL_REF` / `E_SCHEMA_SERVER_REF`).
+- The `.server.ts` suffix is the primary guarantee; `src/server/**` and
+  `moons.config.ts` are additionally guarded. Files without the suffix
+  elsewhere are covered by the public/private contract of the module you place
+  them in.
 - Code written in client modules **is client code by definition** — Moons does
   not hide what you put there.
 - Plugins run inside the Vite pipeline (routes, middleware, context); they are
