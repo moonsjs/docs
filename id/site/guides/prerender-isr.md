@@ -109,7 +109,10 @@ export function createSqliteStorage(file: string): PrerenderStorage {
 Pasang di `moons.config.ts` (`isr: { storage: createSqliteStorage("isr.sqlite") }`),
 lalu **hangatkan store saat deploy**: salin semua path dari manifest prerender
 (`dist/client/_moons_prerender.json`) ke store sebelum instance dilayani.
-Instance yang berbagi store langsung membaca regenerasi satu sama lain. Untuk
+Instance yang berbagi store langsung membaca regenerasi satu sama lain.
+Path yang **tidak ada** di store otomatis jatuh ke `dist/client`
+(aset, halaman non-ISR) — store selalu menang untuk entri yang dimilikinya,
+sehingga penyajian dan regenerasi tetap bersama tanpa kasus khusus aset. Untuk
 mesin yang tidak bisa berbagi file, implementasikan dua method yang sama di
 atas Redis/S3/database — kontraknya (`read` → `{ body, mtimeMs }`, `write`)
 seluas itu saja.

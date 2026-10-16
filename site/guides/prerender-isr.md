@@ -95,6 +95,9 @@ Wire it in `moons.config.ts` (`isr: { storage: createSqliteStorage("isr.sqlite")
 then **warm the store at deploy time**: copy every path from the prerender
 manifest (`dist/client/_moons_prerender.json`) into the store before serving.
 Instances that share the store read each other's regenerations immediately.
+Paths **missing** from the store automatically fall back to `dist/client`
+(assets, non-ISR pages) — the store always wins for the entries it has,
+so serving and regeneration stay shared without special-casing assets.
 For machines that cannot share a file, implement the same two methods on
 Redis/S3/database — the contract (`read` → `{ body, mtimeMs }`, `write`) is the
 whole surface.
