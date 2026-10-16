@@ -121,7 +121,7 @@ const data = await verifyCookie<{ userId: string }>(token, env("SESSION_SECRET")
 
 ## Rate limiting
 
-`createRateLimiter({ limit, windowMs })` returns `{ check(key), reset(key?) }` with a `{ ok, remaining, retryAfterMs }` result — a sliding window per key, kept in memory (one instance). Use it in middleware, `serverFn`, or `src/api`.
+`createRateLimiter({ limit, windowMs })` returns `{ check(key), reset(key?) }` with a `{ ok, remaining, retryAfterMs }` result — a sliding window per key, kept in memory (one instance). The store is bounded: at most `maxKeys` entries (default 10,000), oldest key evicted first — safe against spoofed keys. Use it in middleware, `serverFn`, or `src/api`.
 
 ```ts
 import { createRateLimiter } from "@moonsjs/server";
