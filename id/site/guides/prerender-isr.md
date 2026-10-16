@@ -113,3 +113,25 @@ Instance yang berbagi store langsung membaca regenerasi satu sama lain. Untuk
 mesin yang tidak bisa berbagi file, implementasikan dua method yang sama di
 atas Redis/S3/database — kontraknya (`read` → `{ body, mtimeMs }`, `write`)
 seluas itu saja.
+
+Sketsa Redis dengan dua method yang sama (klien Redis apa pun):
+
+```ts
+export function createRedisStorage(redis: RedisLike): PrerenderStorage {
+  return {
+    async read(pathname) {
+      const value = await redis.get(`moons:prerender:${pathname}`);
+      if (value === null) return null;
+      const { body, mtimeMs } = JSON.parse(value); // body: base64
+      return { body: Buffer.from(body, "base64"), mtimeMs };
+    },
+    async write(pathname, body) {
+      await redis.set(
+        `moons:prerender:${pathname}`,
+        JSON.stringify({ body: Buffer.from(body).toString("base64"), mtimeMs: Date.now() }),
+      );
+    },
+  };
+}
+```
+

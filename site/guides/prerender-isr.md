@@ -98,3 +98,25 @@ Instances that share the store read each other's regenerations immediately.
 For machines that cannot share a file, implement the same two methods on
 Redis/S3/database — the contract (`read` → `{ body, mtimeMs }`, `write`) is the
 whole surface.
+
+A Redis sketch of the same two methods (any Redis client):
+
+```ts
+export function createRedisStorage(redis: RedisLike): PrerenderStorage {
+  return {
+    async read(pathname) {
+      const value = await redis.get(`moons:prerender:${pathname}`);
+      if (value === null) return null;
+      const { body, mtimeMs } = JSON.parse(value); // body: base64
+      return { body: Buffer.from(body, "base64"), mtimeMs };
+    },
+    async write(pathname, body) {
+      await redis.set(
+        `moons:prerender:${pathname}`,
+        JSON.stringify({ body: Buffer.from(body).toString("base64"), mtimeMs: Date.now() }),
+      );
+    },
+  };
+}
+```
+
