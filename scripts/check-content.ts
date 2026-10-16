@@ -2,7 +2,7 @@
 // Guard dokumen publik:
 // 1) rujukan internal (PRD/§/Addendum) dilarang di dokumentasi publik;
 // 2) tautan cookbook (URL GitHub absolut) diverifikasi terhadap clone
-//    `examples/cookbook` bila ada (CI selalu meng-clone).
+//    cookbook (`moonsjs/cookbook`) bila ada (CI selalu meng-clone).
 import { existsSync, readFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
