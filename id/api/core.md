@@ -36,6 +36,7 @@ Key opsional yang menghasilkan berkas produksi dan perilaku runtime:
 - `sitemap` — `{ site, exclude? }`; menulis `sitemap.xml` dari path yang benar-benar di-prerender.
 - `robots` — `{ sitemap?, disallow? }`; menulis `robots.txt`.
 - `hooks` — `onRequest`, `onResponse` (boleh mengembalikan `Response` pengganti), `onError`.
+- `isr` — `{ storage? }`; `PrerenderStorage` bersama untuk file prerender (ISR multi-instance; lihat halaman Vite).
 
 ```ts
 export default defineConfig({

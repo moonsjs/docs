@@ -83,3 +83,28 @@ Runtime endpoints: HTML for every route · static `dist/client/**` · RPC
 2. `generateBundle` verification (`.server` modules must be stubs; canary optional).
 3. CI leak test — also run by the
    fixture via `leakTest.canary`.
+
+## ISR storage (multi-instance)
+
+`revalidate` pages are served from `dist/client` by default. To share regenerated pages across instances, provide a storage:
+
+```ts
+// moons.config.ts
+import { defineConfig } from "@moonsjs/core";
+
+const storage = {
+  async read(pathname: string) {
+    // → { body: Uint8Array, mtimeMs: number } | null
+  },
+  async write(pathname: string, body: Uint8Array) {
+    // simpan body untuk pathname
+  },
+};
+
+export default defineConfig({
+  context: async () => ({}),
+  isr: { storage },
+});
+```
+
+The server reads fresh pages from that storage and writes regenerated ones through it. Stale entries are still served while regeneration runs; the leak guard stays fail-closed. `createFileStorage(clientDir)` (exported from `@moonsjs/vite/server`) is the default implementation and a reference for wrappers.

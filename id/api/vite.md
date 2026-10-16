@@ -82,3 +82,28 @@ Endpoint runtime: HTML semua route · static `dist/client/**` · RPC
 1. Transform + rejection saat build/dev.
 2. Verifikasi `generateBundle` (module `.server` wajib stub; canary opsional).
 3. Leak test CI — dijalankan juga oleh fixture lewat `leakTest.canary`.
+
+## Storage ISR (multi-instance)
+
+Halaman `revalidate` dilayani dari `dist/client` secara bawaan. Agar hasil regenerasi dibagi antar-instance, sediakan storage:
+
+```ts
+// moons.config.ts
+import { defineConfig } from "@moonsjs/core";
+
+const storage = {
+  async read(pathname: string) {
+    // → { body: Uint8Array, mtimeMs: number } | null
+  },
+  async write(pathname: string, body: Uint8Array) {
+    // simpan body untuk pathname
+  },
+};
+
+export default defineConfig({
+  context: async () => ({}),
+  isr: { storage },
+});
+```
+
+Server membaca halaman dari storage itu dan menulis hasil regenerasi lewat storage yang sama. Entri kedaluwarsa tetap disajikan selama regenerasi berjalan; guard kebocoran tetap fail-closed. `createFileStorage(clientDir)` (dari `@moonsjs/vite/server`) adalah implementasi default sekaligus acuan pembungkus.

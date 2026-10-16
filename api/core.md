@@ -36,6 +36,7 @@ Optional keys that produce production files and runtime behavior:
 - `sitemap` — `{ site, exclude? }`; emits `sitemap.xml` from the paths that were actually prerendered.
 - `robots` — `{ sitemap?, disallow? }`; emits `robots.txt`.
 - `hooks` — `onRequest`, `onResponse` (may return a replacement `Response`), `onError`.
+- `isr` — `{ storage? }`; a shared `PrerenderStorage` for prerendered files (multi-instance ISR; see the Vite page).
 
 ```ts
 export default defineConfig({
