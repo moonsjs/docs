@@ -8,7 +8,8 @@
     "dev": "bun run content && moons dev",
     "start": "moons start",
     "check": "bun scripts/check-content.ts",
-    "smoke": "bun scripts/static-smoke.ts"
+    "smoke": "bun scripts/static-smoke.ts",
+    "typecheck": "bun run content && moons check"
   },
   "dependencies": {
     "@fontsource/ibm-plex-sans": "^5.2.7",
