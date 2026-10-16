@@ -1,15 +1,14 @@
 # `@moonsjs/vite`
 
 Build/dev plugin + server runtime. The zero-trust transform lives in
-`src/transform.ts` — see also `../decisions/0002-m1-ssr.md` and
-`../decisions/0003-m2-zero-trust.md`.
+`src/transform.ts`.
 
 The **server-only package** gate also lives in `src/transform.ts` +
 `src/server-only.ts` (the built-in `DEFAULT_SERVER_ONLY_PACKAGES` list, the
 `"moons": { "serverOnly": true }` marker in package.json, and
 `security.serverOnlyPackages` from the config): direct/dynamic/re-export imports
 from the client graph → `E_FORBIDDEN_SERVER_IMPORT` (type-only imports are
-exempt); enforced by `scripts/m2/test-server-only-import.sh`.
+exempt); enforced in the framework CI.
 
 **A1 (dev)**: `createRequestHandler` accepts `payloadScan?: PayloadScanOptions`
 (filled only by the dev runtime — `createDevApp(shell, payloadScan)`): a
@@ -82,5 +81,5 @@ Runtime endpoints: HTML for every route · static `dist/client/**` · RPC
 
 1. Transform + rejection at build/dev time.
 2. `generateBundle` verification (`.server` modules must be stubs; canary optional).
-3. CI leak test `scripts/m2/test-leak.sh` — also run by the
+3. CI leak test — also run by the
    fixture via `leakTest.canary`.

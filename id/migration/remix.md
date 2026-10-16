@@ -120,4 +120,4 @@ export default function UserPage() {
 3. Pindahkan seluruh akses rahasia ke `*.server.ts` + `env()`.
 4. Tidak ada import `node:*` di modul client (`E_FORBIDDEN_SERVER_IMPORT`).
 5. Tambahkan `leakTest.canary` pada app Anda (opsional) + jalankan leak test
-   dengan pola `scripts/m2/test-leak.sh`.
+   dengan canary Anda sendiri.

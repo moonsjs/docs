@@ -119,5 +119,5 @@ export default function UserPage() {
 2. `bun run tsc --noEmit` green (serverFn `input`/`output` types bind the client).
 3. Move all secret access into `*.server.ts` + `env()`.
 4. No `node:*` imports in client modules (`E_FORBIDDEN_SERVER_IMPORT`).
-5. Add `leakTest.canary` to your app (optional) + run the leak test
-   following the `scripts/m2/test-leak.sh` pattern.
+5. Add `leakTest.canary` to your app (optional) and run the leak test with
+   your own canary.

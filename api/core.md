@@ -103,8 +103,7 @@ function generateTypes(args: { routesDir: string; configPath: string; outDir: st
 
 Writes `.moons/routes.d.ts` (augments `RouteMap` for `@moonsjs/react`) and
 `.moons/context.d.ts` (global `Ctx` + `export type Ctx`). The `routes.d.ts` file
-ends with `export {}` so the augmentation takes effect
-(see `../decisions/0002-m1-ssr.md`).
+ends with `export {}` so the augmentation takes effect.
 
 ## serverFn hash
 

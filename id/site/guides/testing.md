@@ -51,9 +51,8 @@ Stub client memvalidasi sebelum fetch. Untuk mengujinya, bangun stub langsung
 
 ## E2E
 
-Untuk bukti end-to-end (build + server nyata + canary), lihat pola di
-[`scripts/cookbook/test-cookbook.sh`](https://github.com/moonsjs)
-(repo privat) atau tiru: build → `moons start` → curl/RPC → cek `dist/client`
-bebas canary.
+Untuk bukti end-to-end (build + server nyata + canary): build → `moons start`
+→ curl/RPC → pastikan `dist/client` bebas canary. Pola yang sama dijalankan
+[cookbook](https://github.com/moonsjs/cookbook) di CI — tiru untuk pipeline Anda.
 
 > Jalankan `bunx moons check` sebelum menyatakan pekerjaan selesai.

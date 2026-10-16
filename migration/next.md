@@ -92,5 +92,5 @@ Mutations do not use form actions: call the `serverFn` from the client
 2. `bun run tsc --noEmit` green (e.g. schema drift between route/server).
 3. Audit env: all secret access goes through `env()` in `*.server.ts`.
 4. Make sure there are no `node:*` imports in client modules.
-5. Run your expected CI flow → leak test `scripts/m2/test-leak.sh` as a
-   pattern (add a canary to your app via `leakTest.canary`).
+5. Run your expected CI flow → add a leak test (set a canary in your app via
+   `leakTest.canary`).

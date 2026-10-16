@@ -77,11 +77,11 @@ bisa"* yang ditegakkan oleh build yang gagal.
  termasuk re-export dan conditional import.
 3. **Leak test CI — sacred**: canary ditanam di handler fixture; setelah
    build, `dist/client` dipindai; ditemukan → **merge dilarang**. Fixture
-   `examples/m2-leak` juga menyetel `leakTest.canary` sehingga build itu sendiri
-   gagal bila canary muncul (dua jalur gagal, satu kebenaran).
+   fixture kebocoran framework juga menyetel `leakTest.canary` sehingga build
+   itu sendiri gagal bila canary muncul (dua jalur gagal, satu kebenaran).
 
-Bukti eksekusi: `scripts/m2/test-leak.sh`, `test-import-reject.sh`,
-`test-error-format.sh` + unit test transform (lihat `docs/decisions/0003-m2-zero-trust.md`).
+Dijaga di CI framework: leak test, test penolakan import, test format error,
+dan unit test transform.
 
 ## 6. Perbandingan mekanisme
 
@@ -99,50 +99,15 @@ Bukti eksekusi: `scripts/m2/test-leak.sh`, `test-import-reject.sh`,
 
 - Kode yang ditulis di modul client **memang untuk client** — Moons tidak
   menyembunyikan apa yang Anda taruh di sana.
-- `plugins` belum dieksekusi; integrasi internal core bukan jalur yang
-  didukung v1.
-- Rendering `meta` (title/description) belum diimplementasikan v1; gunakan
-  `index.html`.
-- Source map client tidak diaktifkan build v1.
+- Plugin berjalan di dalam pipeline Vite (route, middleware, konteks); bukan
+  sandbox terhadap kode yang memang Anda taruh di modul client.
+- `meta` merender title, description, dan Open Graph di server serta
+  menyinkronkannya saat navigasi klien.
+- Source map client tidak dihasilkan secara bawaan.
 - Jaminan berlaku untuk alur build plugin `moons()`; menonaktifkan plugin atau
   mengimpor `.server.ts` lewat jalur non-Vite bukan skenario yang didukung.
 
-## 8. Bahasa & register dokumentasi
-
-Dua register dipisah **dengan sengaja**:
-
-| Register | Bahasa | Lokasi | Alasan |
-| --- | --- | --- | --- |
-| Dokumentasi pengguna | Indonesia | `docs/site/**`, `docs/api/**`, `docs/migration/**`, `docs/manifest.md` | audiens utama; istilah API tetap asli (`serverFn`, `ctx`, `env()`) |
-| Paket agen | Inggris | `llms.txt`, `docs/ai/**` | agen membaca istilah teknis Inggris; anti-drift lewat `scripts/ai/check-ai-links.ts` |
-
-Aturan label (sidebar & judul): kalimat deskriptif berbahasa Indonesia;
-identitas API dan jargon baku (build, deploy, auth, CSRF, routing, loader,
-`serverFn`, `ctx`, rate limit) tidak diterjemahkan.
-
-**Terjemahan EN (2026-10-15, selesai)**: i18n Starlight aktif —
-`defaultLocale: "root"` (ID) + locale `en`, konten EN di `docs/site-en/**`
-(dipetakan generator ke `src/content/docs/en/**`), label sidebar per-locale via
-`translations`. **Seluruh 20 halaman situs** punya padanan EN
-(`index`, `keamanan`, `mulai/*` 2, `dasar/*` 7, `panduan/*` 10); halaman ID lain
-(`docs/api`, `docs/migration`, `docs/ai`) jatuh ke fallback locale root.
-Sebaliknya `docs/ai/**` sengaja EN tanpa padanan ID (paket agen).
-
-## 9. Struktur & pedoman dokumentasi
-
-Struktur situs mengikuti **Diátaxis** (tutorial → how-to → reference →
-explanation) dan gaya **Google developer documentation style guide** — peta
-lengkap + alasan di `docs/decisions/0025-docs-ia.md`. Aturan praktis:
-
-- Riwayat internal (keputusan, catatan milestone) **tidak diterbitkan**:
-  `docs/decisions/**`, `docs/milestones/**` hidup di repo saja.
-- Materi baru diletakkan pada kuadran yang tepat: "Mulai" (tutorial),
-  "Panduan" (how-to), "Referensi" (reference), "Konsep"/"Arsitektur"
-  (explanation); contoh eksternal di "Contoh".
-- Setiap halaman situs punya padanan EN (`docs/site-en/**`) dengan label
-  sidebar per-locale; halaman non-situs jatuh ke fallback locale root.
-
-## 10. Penutup
+## 8. Penutup
 
 Framework lain mengatakan: *"Kami membuat type-safety end-to-end."*
 Moons mengatakan: *"Kami membuat kebocoran kode server ke client mustahil.

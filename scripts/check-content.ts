@@ -28,7 +28,8 @@ for (const pattern of [
   }
 }
 
-const FORBIDDEN = /§[0-9]|PRD|Addendum [A-E]/u;
+const FORBIDDEN =
+  /§[0-9]|PRD\b|Addendum [A-E]|\bdocs\/(decisions|milestones|site|site-en)\b|\.\.\/decisions\/\d|\bscripts\/(m\d|ai|cookbook)\b|\bexamples\/(basic|m2-leak|m8|m9-static|demo)\b|\bpackages\/[a-z-]+\/|\bStarlight\b/u;
 const LINK_PATTERN = /\[[^\]]*\]\(([^)]+)\)/g;
 const failures: string[] = [];
 let cookbookChecked = 0;

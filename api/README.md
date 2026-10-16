@@ -1,12 +1,7 @@
-# API reference — Moons v1
+# API reference
 
-> Implementation reference for the **source in this repo** (v1, pre-1.0) —
-> per-package entry points; the internal history (specs, decisions, milestone
-> notes) lives in the repo — not on the site.
->
-> The **per-package** pages are entry points; per-milestone history notes
-> (M1–M7) are deliberately **not published** — the archive lives in
-> `docs/milestones/` (internal); docs structure in `docs/decisions/0025-docs-ia.md`.
+> Reference for `@moonsjs/*` **0.1** (pre-1.0 — APIs may change between minor
+> releases). One page per package: exports, types, and behavior you can rely on.
 
 ## Packages
 
@@ -33,4 +28,4 @@
 - **Plugin config (`plugins`)**: types are validated strictly (keys outside the
   shape → `E_CONFIG_INVALID`) and **executed** — `addRoute`/`addMiddleware`
   (observation), `extendContext` (merge ctx per request), `onStart`/`onReady`/
-  `onShutdown` — see `../decisions/0022-m7-kontrak-ux.md`.
+  `onShutdown`.

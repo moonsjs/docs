@@ -204,10 +204,60 @@ interface RenderResult {
   toc: TocEntry[];
 }
 
+/** Satu blok kode → HTML shiki (dual theme). */
+async function highlightCode(lang: string, code: string): Promise<string> {
+  const requested = lang.trim().split(/\s+/)[0] ?? "";
+  const loaded = highlighter.getLoadedLanguages();
+  const language = loaded.includes(requested) ? requested : "text";
+  try {
+    return highlighter.codeToHtml(code, {
+      lang: language,
+      themes: { light: "vitesse-light", dark: "vitesse-dark" },
+    });
+  } catch {
+    return `<pre><code>${escapeHtml(code)}</code></pre>`;
+  }
+}
+
+/**
+ * Ganti setiap fenced code block dengan fence penanda `moons-code` + indeks.
+ * Highlighting di-precompute (sinkron untuk marked) — renderer TIDAK async,
+ * sehingga tidak ada `[object Promise]` yang bisa bocor ke HTML.
+ */
+async function precompileFences(
+  body: string,
+): Promise<{ body: string; blocks: Map<number, string> }> {
+  const lines = body.split("\n");
+  const out: string[] = [];
+  const blocks = new Map<number, string>();
+  let index = 0;
+  for (let i = 0; i < lines.length; i += 1) {
+    const open = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(lines[i] as string);
+    if (open === null) {
+      out.push(lines[i] as string);
+      continue;
+    }
+    const fenceChar = (open[1] as string)[0] as string;
+    const close = new RegExp(`^ {0,3}\\${fenceChar}{3,}\\s*$`);
+    const content: string[] = [];
+    let j = i + 1;
+    while (j < lines.length && !close.test(lines[j] as string)) {
+      content.push(lines[j] as string);
+      j += 1;
+    }
+    blocks.set(index, await highlightCode(open[2] ?? "", content.join("\n")));
+    out.push("```moons-code", String(index), "```");
+    index += 1;
+    i = j;
+  }
+  return { body: out.join("\n"), blocks };
+}
+
 async function renderMarkdown(source: Source, body: string): Promise<RenderResult> {
   const toc: TocEntry[] = [];
   const usedIds = new Set<string>();
-  const marked = new Marked({ async: true, gfm: true });
+  const marked = new Marked({ gfm: true });
+  const { body: prepared, blocks } = await precompileFences(body);
 
   marked.use({
     renderer: {
@@ -226,20 +276,15 @@ async function renderMarkdown(source: Source, body: string): Promise<RenderResul
         }
         return `<h${depth} id="${id}">${inline}</h${depth}>\n`;
       },
-      async code({ text, lang }: Tokens.Code) {
-        const requested = (lang ?? "").trim().split(/\s+/)[0] ?? "";
-        const loaded = highlighter.getLoadedLanguages();
-        const language = loaded.includes(requested) ? requested : "text";
-        let inner: string;
-        try {
-          inner = highlighter.codeToHtml(text, {
-            lang: language,
-            themes: { light: "vitesse-light", dark: "vitesse-dark" },
-          });
-        } catch {
-          inner = `<pre><code>${escapeHtml(text)}</code></pre>`;
+      code({ text, lang }: Tokens.Code) {
+        if ((lang ?? "").trim() === "moons-code") {
+          const highlighted = blocks.get(Number(text.trim()));
+          if (highlighted === undefined) {
+            throw new Error(`[docs] blok kode tanpa hasil highlight di ${source.repoRel}`);
+          }
+          return `<div class="code-block"><button type="button" data-code-copy>Copy</button>${highlighted}</div>\n`;
         }
-        return `<div class="code-block"><button type="button" data-code-copy>Copy</button>${inner}</div>\n`;
+        return `<div class="code-block"><button type="button" data-code-copy>Copy</button><pre><code>${escapeHtml(text)}</code></pre></div>\n`;
       },
       link({ href, title, tokens }: Tokens.Link) {
         const text = this.parser.parseInline(tokens);
@@ -252,7 +297,7 @@ async function renderMarkdown(source: Source, body: string): Promise<RenderResul
   });
 
   // H1 pertama dipakai sebagai title halaman (dibuang dari body).
-  const lines = body.split("\n");
+  const lines = prepared.split("\n");
   let inCode = false;
   const h1Index = lines.findIndex((line) => {
     if (line.startsWith("```")) {
@@ -266,7 +311,10 @@ async function renderMarkdown(source: Source, body: string): Promise<RenderResul
     lines.splice(h1Index, 1);
   }
 
-  const html = (await marked.parse(lines.join("\n"))) as string;
+  const html = marked.parse(lines.join("\n")) as string;
+  if (html.includes("[object Promise]")) {
+    throw new Error(`[docs] artefak [object Promise] di HTML hasil render ${source.repoRel}`);
+  }
   return { html, toc, ...(title === null ? {} : { title }) };
 }
 

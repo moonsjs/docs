@@ -78,11 +78,11 @@ enforced by a build that fails.
    including re-exports and conditional imports.
 3. **CI leak test — sacred**: the canary is planted in a fixture handler; after
    the build, `dist/client` is scanned; if found → **merge is forbidden**. The
-   `examples/m2-leak` fixture also sets `leakTest.canary` so the build itself
+   framework's leak fixture also sets `leakTest.canary` so the build itself
    fails if the canary appears (two failure paths, one truth).
 
-Execution evidence: `scripts/m2/test-leak.sh`, `test-import-reject.sh`,
-`test-error-format.sh` + transform unit tests (see `docs/decisions/0003-m2-zero-trust.md`).
+Enforced in the framework CI: leak tests, import-rejection tests, error-format
+tests, and transform unit tests.
 
 ## 6. Mechanism comparison
 
@@ -100,52 +100,16 @@ Execution evidence: `scripts/m2/test-leak.sh`, `test-import-reject.sh`,
 
 - Code written in client modules **is client code by definition** — Moons does
   not hide what you put there.
-- `plugins` are not executed yet; internal core integration is not a v1-supported
-  path.
-- Rendering `meta` (title/description) is not implemented in v1; use
-  `index.html`.
-- Client source maps are not enabled in the v1 build.
+- Plugins run inside the Vite pipeline (routes, middleware, context); they are
+  not a sandbox against code you deliberately place in client modules.
+- `meta` renders title, description and Open Graph tags on the server and keeps
+  them in sync on client-side navigation.
+- Client source maps are not emitted by default.
 - The guarantee applies to the `moons()` plugin build pipeline; disabling the
   plugin or importing `.server.ts` through a non-Vite path is not a supported
   scenario.
 
-## 8. Documentation language & register
-
-Two registers are kept apart **on purpose**:
-
-| Register | Language | Location | Reason |
-| --- | --- | --- | --- |
-| User documentation | Indonesian | `docs/site/**`, `docs/api/**`, `docs/migration/**`, `docs/manifest.md` | primary audience; API terms stay as-is (`serverFn`, `ctx`, `env()`) |
-| Agent pack | English | `llms.txt`, `docs/ai/**` | agents read English technical terms; anti-drift via `scripts/ai/check-ai-links.ts` |
-
-Label rules (sidebar & headings): descriptive sentences in Indonesian;
-API identities and standard jargon (build, deploy, auth, CSRF, routing, loader,
-`serverFn`, `ctx`, rate limit) are not translated.
-
-**EN translation (2026-10-15, done)**: Starlight i18n is active —
-`defaultLocale: "root"` (ID) + locale `en`, EN content in `docs/site-en/**`
-(mapped by the generator to `src/content/docs/en/**`), per-locale sidebar labels
-via `translations`. **All 20 site pages** have an EN counterpart
-(`index`, `keamanan`, `mulai/*` 2, `dasar/*` 7, `panduan/*` 10); other ID pages
-(`docs/api`, `docs/migration`, `docs/ai`) fall back to the root locale.
-Conversely, `docs/ai/**` is deliberately EN with no ID counterpart (the agent
-pack).
-
-## 9. Documentation structure & guidelines
-
-The site structure follows **Diátaxis** (tutorial → how-to → reference →
-explanation) and the **Google developer documentation style guide** — the full
-map + rationale in `docs/decisions/0025-docs-ia.md`. Practical rules:
-
-- Internal history (decisions, milestone notes) is **not published**:
-  `docs/decisions/**`, `docs/milestones/**` live in the repo only.
-- New material goes in the right quadrant: "Start" (tutorial),
-  "Guides" (how-to), "Reference", "Concepts"/"Architecture"
-  (explanation); external examples under "Examples".
-- Every site page has an EN counterpart (`docs/site-en/**`) with per-locale
-  sidebar labels; non-site pages fall back to the root locale.
-
-## 10. Closing
+## 8. Closing
 
 Other frameworks say: *"We make type safety end-to-end."*
 Moons says: *"We make leaking server code to the client impossible.

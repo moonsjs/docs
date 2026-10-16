@@ -94,5 +94,5 @@ merupakan non-goal. Kalau helper dibutuhkan, jalurnya amendemen spesifikasi resm
 
 ## Untuk agen AI
 
-Resep Inggris: [`docs/ai/recipes/auth-ctx.md`](/ai/recipes/auth-ctx/) — tautan
-ke kode cookbook nyata yang lolos CI.
+Resep Inggris: [auth via ctx](/ai/recipes/auth-ctx/) — tautan ke kode cookbook
+nyata yang lolos CI.

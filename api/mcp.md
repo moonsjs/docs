@@ -20,16 +20,16 @@ All tools are deterministic; there are no LLM calls in the framework.
 ## Agent context pack (English)
 
 - `llms.txt` / `llms-full.txt` (repo root; `llms-full` is also on the site).
-- `docs/ai/CONTEXT.md` — a compact guide (route anatomy, loaders, serverFn,
-  security, navigation, verification).
-- `docs/ai/recipes/*` — recipes linking to real code in `examples/cookbook`
-  (anti-drift enforced by `scripts/ai/check-ai-links.ts` in CI).
-- `moons create` writes `AGENTS.md` (the app's actual route map) + a local
-  `llms.txt`; the `cli` package bundles `docs/ai/**` + `llms.txt` for offline
-  access.
+- Agent context — a compact guide (route anatomy, loaders, serverFn, security,
+  navigation, verification), bundled in `@moonsjs/cli` at
+  `node_modules/@moonsjs/cli/docs/ai/CONTEXT.md`.
+- Recipes — task-oriented patterns that link to real code in the
+  [cookbook](https://github.com/moonsjs/cookbook), kept in sync by CI.
+- `moons create` writes `AGENTS.md` (the app's actual route map) plus a local
+  `llms.txt`.
 
 ## CLI JSON contract
 
 `moons routes|fns|check|errors --json` — the stable schemas are documented in
 [`../ai/cli-json.md`](../ai/cli-json.md); stderr must stay silent in `--json`
-mode (enforced by `scripts/ai/test-cli-introspection.sh`).
+mode (enforced by the CLI test suite in CI).

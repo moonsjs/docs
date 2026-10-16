@@ -20,15 +20,15 @@ Semua tool deterministik; tidak ada panggilan LLM di framework.
 ## Paket konteks agen (English)
 
 - `llms.txt` / `llms-full.txt` (root repo; `llms-full` juga di situs).
-- `docs/ai/CONTEXT.md` — panduan ringkas (anatomi route, loader, serverFn,
-  keamanan, navigasi, verifikasi).
-- `docs/ai/recipes/*` — resep bertaut ke kode nyata `examples/cookbook`
-  (anti-drift dijaga `scripts/ai/check-ai-links.ts` di CI).
-- `moons create` menulis `AGENTS.md` (peta route aktual app) + `llms.txt` lokal;
-  paket `cli` membundel `docs/ai/**` + `llms.txt` untuk akses offline.
+- Konteks agen — panduan ringkas (anatomi route, loader, serverFn, keamanan,
+  navigasi, verifikasi), dibundel di `@moonsjs/cli` pada
+  `node_modules/@moonsjs/cli/docs/ai/CONTEXT.md`.
+- Resep — pola siap pakai yang bertaut ke kode nyata di
+  [cookbook](https://github.com/moonsjs/cookbook), dijaga CI.
+- `moons create` menulis `AGENTS.md` (peta route aktual app) + `llms.txt` lokal.
 
 ## Kontrak CLI JSON
 
 `moons routes|fns|check|errors --json` — skema stabil didokumentasikan di
 [`../ai/cli-json.md`](../../ai/cli-json.md); stderr wajib sunyi di mode `--json`
-(dijaga `scripts/ai/test-cli-introspection.sh`).
+(dijaga test suite CLI di CI).

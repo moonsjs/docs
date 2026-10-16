@@ -103,7 +103,7 @@ function generateTypes(args: { routesDir: string; configPath: string; outDir: st
 
 Menulis `.moons/routes.d.ts` (augmentasi `RouteMap` untuk `@moonsjs/react`) dan
 `.moons/context.d.ts` (global `Ctx` + `export type Ctx`). File `routes.d.ts`
-diakhiri `export {}` agar augmentasi berlaku (lihat `../decisions/0002-m1-ssr.md`).
+diakhiri `export {}` agar augmentasi berlaku.
 
 ## Hash serverFn 
 

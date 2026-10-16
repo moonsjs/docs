@@ -76,6 +76,26 @@ if (!(await notFound.text()).includes("Page not found")) {
   throw new Error("[docs] 404.html tidak dipakai untuk path tak dikenal");
 }
 
+// Audit render: tidak boleh ada artefak Promise & blok kode harus ter-render.
+const htmlFiles = new Bun.Glob("**/*.html");
+let audited = 0;
+for await (const file of htmlFiles.scan({ cwd: root })) {
+  const html = await Bun.file(join(root, file)).text();
+  audited += 1;
+  if (html.includes("[object Promise]")) {
+    throw new Error(`[docs] artefak [object Promise] di ${file}`);
+  }
+}
+const quickstart = await (await expectStatus("/start/quickstart", 200)).text();
+if (!quickstart.includes('class="shiki')) {
+  throw new Error("[docs] blok kode quickstart tidak ter-render (shiki)");
+}
+const plain = quickstart.replace(/<[^>]+>/g, "");
+if (!plain.includes("moons create my-app")) {
+  throw new Error("[docs] perintah create tidak ada di quickstart");
+}
+console.log(`  audit render: ${audited} halaman, tanpa [object Promise]`);
+
 const executablePath = process.env["MOONS_CHROME_EXECUTABLE"];
 const browser = await chromium.launch(executablePath === undefined ? {} : { executablePath });
 try {

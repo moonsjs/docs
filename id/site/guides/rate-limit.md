@@ -63,5 +63,5 @@ Kode ini hidup dan diuji: [cookbook `moons.config.ts`](https://github.com/moonsj
 
 ## Untuk agen AI
 
-Resep Inggris: [`docs/ai/recipes/rate-limit.md`](/ai/recipes/rate-limit/) —
-memuat kode yang sama dengan tautan ke cookbook (dijaga CI).
+Resep Inggris: [rate limit](/ai/recipes/rate-limit/) — memuat kode yang sama
+dengan tautan ke cookbook (dijaga CI).

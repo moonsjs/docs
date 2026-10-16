@@ -1,12 +1,7 @@
-# Referensi API — Moons v1
+# Referensi API
 
-> Referensi implementasi untuk **source yang ada di repo ini** (v1, pre-1.0) —
-> titik masuk per paket; riwayat internal (spesifikasi, keputusan, catatan
-> milestone) hidup di repo — bukan di situs.
->
-> Halaman **per paket** adalah titik masuk; catatan riwayat per milestone
-> (M1–M7) sengaja **tidak diterbitkan** — arsipnya di `docs/milestones/`
-> (internal). Struktur dokumentasi: `docs/decisions/0025-docs-ia.md`.
+> Referensi `@moonsjs/*` **0.1** (pra-1.0 — API dapat berubah antar rilis
+> minor). Satu halaman per paket: export, tipe, dan perilaku yang bisa dipakai.
 
 ## Package
 
@@ -33,4 +28,4 @@
 - **Plugin config (`plugins`)**: tipe divalidasi ketat (key di luar
   bentuk → `E_CONFIG_INVALID`) dan **dieksekusi** — `addRoute`/`addMiddleware`
   (observasi), `extendContext` (merge ctx per request), `onStart`/`onReady`/
- `onShutdown` — dan `../decisions/0022-m7-kontrak-ux.md`.
+ `onShutdown`.

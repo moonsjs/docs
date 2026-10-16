@@ -1,15 +1,14 @@
 # `@moonsjs/vite`
 
 Plugin build/dev + runtime server. Transform zero-trust hidup di
-`src/transform.ts` — lihat juga `../decisions/0002-m1-ssr.md` dan
-`../decisions/0003-m2-zero-trust.md`.
+`src/transform.ts`.
 
 Gate **paket server-only** juga hidup di `src/transform.ts` +
 `src/server-only.ts` (daftar bawaan `DEFAULT_SERVER_ONLY_PACKAGES`, marker
 `"moons": { "serverOnly": true }` di package.json, dan
 `security.serverOnlyPackages` dari config): import langsung/dinamis/re-export
 dari graph client → `E_FORBIDDEN_SERVER_IMPORT` (type-only dikecualikan);
-dijaga `scripts/m2/test-server-only-import.sh`.
+dijaga CI framework.
 
 **A1 (dev)**: `createRequestHandler` menerima `payloadScan?: PayloadScanOptions`
 (hanya diisi runtime dev — `createDevApp(shell, payloadScan)`): peringatan
@@ -82,5 +81,4 @@ Endpoint runtime: HTML semua route · static `dist/client/**` · RPC
 
 1. Transform + rejection saat build/dev.
 2. Verifikasi `generateBundle` (module `.server` wajib stub; canary opsional).
-3. Leak test CI `scripts/m2/test-leak.sh` — dijalankan juga oleh
-   fixture lewat `leakTest.canary`.
+3. Leak test CI — dijalankan juga oleh fixture lewat `leakTest.canary`.

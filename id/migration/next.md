@@ -92,5 +92,5 @@ Mutasi tidak memakai form action: panggil `serverFn` dari client
 2. `bun run tsc --noEmit` hijau (mis. schema drift antar route/server).
 3. Audit env: semua akses rahasia lewat `env()` di `*.server.ts`.
 4. Pastikan tidak ada import `node:*` di modul client.
-5. Jalankan alur CI dugaan Anda → leak test `scripts/m2/test-leak.sh` sebagai
-   pola (tambahkan canary di app Anda via `leakTest.canary`).
+5. Jalankan alur CI Anda → tambahkan leak test (canary lewat
+   `leakTest.canary`).

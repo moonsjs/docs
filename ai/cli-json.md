@@ -6,8 +6,7 @@ shapes are part of the public contract:
 - Fields may be **added** in a minor release; existing fields never change
   meaning, are never renamed, and are never removed.
 - In `--json` mode the command writes **one JSON document to stdout** and
-  nothing else. stderr stays silent too (enforced by
-  `scripts/ai/test-cli-introspection.sh`).
+  nothing else. stderr stays silent too — the framework CI enforces this.
 
 ## `moons routes --json`
 
