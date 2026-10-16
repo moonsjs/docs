@@ -71,4 +71,45 @@ export const revalidate = 60; // detik; 0 = selalu diregenerasi saat request
 
 ## Beberapa instance
 
-Secara bawaan tiap instance menyimpan file sendiri, sehingga hasil regenerasi tidak menyebar. Konfigurasikan `isr.storage` bersama (sebuah `PrerenderStorage` dengan `read`/`write`) agar penyajian dan regenerasi berlaku lintas instance — lihat referensi Vite untuk bentuknya.
+Secara bawaan tiap instance menyimpan file sendiri, sehingga hasil regenerasi
+tidak menyebar. Konfigurasikan `isr.storage` bersama (sebuah `PrerenderStorage`
+dengan `read`/`write`) agar penyajian dan regenerasi berlaku lintas instance —
+lihat referensi Vite untuk bentuknya.
+
+Contoh store (SQLite via `bun:sqlite`, satu mesin):
+
+```ts
+// src/shared/isr-storage.ts
+import { Database } from "bun:sqlite";
+import type { PrerenderStorage } from "@moonsjs/core";
+
+export function createSqliteStorage(file: string): PrerenderStorage {
+  const db = new Database(file);
+  db.run(
+    "CREATE TABLE IF NOT EXISTS moons_prerender (path TEXT PRIMARY KEY, body BLOB NOT NULL, mtime_ms INTEGER NOT NULL)",
+  );
+  return {
+    async read(pathname) {
+      const row = db
+        .query("SELECT body, mtime_ms FROM moons_prerender WHERE path = ?")
+        .get(pathname) as { body: Uint8Array; mtime_ms: number } | null;
+      return row === null ? null : { body: new Uint8Array(row.body), mtimeMs: row.mtime_ms };
+    },
+    async write(pathname, body) {
+      db.run(
+        "INSERT INTO moons_prerender (path, body, mtime_ms) VALUES (?, ?, ?) " +
+          "ON CONFLICT(path) DO UPDATE SET body = excluded.body, mtime_ms = excluded.mtime_ms",
+        [pathname, body, Date.now()],
+      );
+    },
+  };
+}
+```
+
+Pasang di `moons.config.ts` (`isr: { storage: createSqliteStorage("isr.sqlite") }`),
+lalu **hangatkan store saat deploy**: salin semua path dari manifest prerender
+(`dist/client/_moons_prerender.json`) ke store sebelum instance dilayani.
+Instance yang berbagi store langsung membaca regenerasi satu sama lain. Untuk
+mesin yang tidak bisa berbagi file, implementasikan dua method yang sama di
+atas Redis/S3/database — kontraknya (`read` → `{ body, mtimeMs }`, `write`)
+seluas itu saja.

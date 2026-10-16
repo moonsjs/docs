@@ -57,6 +57,10 @@ Importing a server-only npm package from a client module **fails the build**
   third-party API from the server) — never export the key.
 - Inspect the server-only file list any time: `bunx moons fns --json`
   (`serverFiles` field).
+- **Strict CSP works out of the box**: Moons emits no executable inline
+  scripts — the SSR payload is a non-executable `application/x-moons` data
+  block and the entry is an external module. A `script-src 'self'` policy does
+  not block hydration (verified in a real browser by the CI CSP test).
 - Verify: `bunx moons check` — typegen + tsc + client/server build + prerender.
 - **Dev**: the SSR payload is scanned automatically — a console warning appears
   if it contains the `leakTest.canary` or a secret-looking env value (≥12

@@ -81,6 +81,10 @@ Saran:
 
 ## Pola aman
 
+- **CSP ketat langsung bekerja**: Moons tidak memancarkan script inline
+  eksekutabel — payload SSR adalah data block `application/x-moons` yang tidak
+  dieksekusi, dan entry-nya module eksternal. Policy `script-src 'self'` tidak
+  memblokir hydration (diverifikasi di browser nyata oleh test CSP di CI).
 - Rahasia dipakai **hanya** di dalam handler `serverFn`; yang keluar hanyalah
   `output` yang tervalidasi schema.
 - Untuk operasi bergantung kredensial di halaman: buat `serverFn` khusus

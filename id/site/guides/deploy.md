@@ -71,6 +71,14 @@ alamat klien tepercaya: entri pertama `x-forwarded-for` bila `trustProxy`
 aktif, selain itu alamat socket. Pakai nilainya (lewat `getClientIp`) untuk
 rate limit — lihat panduan [rate limit](/id/guides/rate-limit/).
 
+## Perilaku respons runtime
+
+Respons file dari `moons start` ramah cache sejak bawaan: `ETag` (dengan
+`304 Not Modified` pada `If-None-Match`), gzip bila `Accept-Encoding`
+mengizinkan (aset teks > 1 KB), dan `Cache-Control: public, max-age=31536000,
+immutable` untuk `/assets/*` ber-hash. Tanpa konfigurasi; reverse proxy/CDN di
+depannya tetap bekerja apa adanya.
+
 ## Checklist produksi
 
 1. `bunx moons check` hijau di CI, leak test merah = merge dilarang.

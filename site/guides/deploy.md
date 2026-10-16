@@ -53,6 +53,14 @@ with the trusted client address: the first `x-forwarded-for` entry when
 `trustProxy` is on, otherwise the socket address. Use it (via `getClientIp`)
 for rate limiting — see the [rate limiting](/guides/rate-limit/) guide.
 
+## Runtime response behavior
+
+File responses from `moons start` are cached-friendly by default: an `ETag`
+(with `304 Not Modified` on `If-None-Match`), gzip when `Accept-Encoding`
+allows (text assets over 1 KB), and `Cache-Control: public, max-age=31536000,
+immutable` for hashed `/assets/*`. No configuration needed; a reverse proxy or
+CDN in front keeps working unchanged.
+
 ## Production checklist
 
 - [ ] `bun run check` green (no skipped steps).

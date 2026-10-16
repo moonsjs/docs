@@ -56,4 +56,45 @@ export const revalidate = 60; // seconds; 0 = regenerate on every request
 
 ## Multiple instances
 
-Each instance keeps its own files by default, so regenerations do not propagate. Configure a shared `isr.storage` (a `PrerenderStorage` with `read`/`write`) to serve and regenerate pages across instances — see the Vite reference for the shape.
+Each instance keeps its own files by default, so regenerations do not
+propagate. Configure a shared `isr.storage` (a `PrerenderStorage` with
+`read`/`write`) to serve and regenerate pages across instances — see the Vite
+reference for the shape.
+
+A store-backed example (SQLite via `bun:sqlite`, single machine):
+
+```ts
+// src/shared/isr-storage.ts
+import { Database } from "bun:sqlite";
+import type { PrerenderStorage } from "@moonsjs/core";
+
+export function createSqliteStorage(file: string): PrerenderStorage {
+  const db = new Database(file);
+  db.run(
+    "CREATE TABLE IF NOT EXISTS moons_prerender (path TEXT PRIMARY KEY, body BLOB NOT NULL, mtime_ms INTEGER NOT NULL)",
+  );
+  return {
+    async read(pathname) {
+      const row = db
+        .query("SELECT body, mtime_ms FROM moons_prerender WHERE path = ?")
+        .get(pathname) as { body: Uint8Array; mtime_ms: number } | null;
+      return row === null ? null : { body: new Uint8Array(row.body), mtimeMs: row.mtime_ms };
+    },
+    async write(pathname, body) {
+      db.run(
+        "INSERT INTO moons_prerender (path, body, mtime_ms) VALUES (?, ?, ?) " +
+          "ON CONFLICT(path) DO UPDATE SET body = excluded.body, mtime_ms = excluded.mtime_ms",
+        [pathname, body, Date.now()],
+      );
+    },
+  };
+}
+```
+
+Wire it in `moons.config.ts` (`isr: { storage: createSqliteStorage("isr.sqlite") }`),
+then **warm the store at deploy time**: copy every path from the prerender
+manifest (`dist/client/_moons_prerender.json`) into the store before serving.
+Instances that share the store read each other's regenerations immediately.
+For machines that cannot share a file, implement the same two methods on
+Redis/S3/database — the contract (`read` → `{ body, mtimeMs }`, `write`) is the
+whole surface.
