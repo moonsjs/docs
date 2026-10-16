@@ -1,3 +1,5 @@
+declare module "*.css";
+
 declare module "virtual:moons-docs-content" {
   import type { DocsContent } from "../lib/content-types";
   export const content: DocsContent;

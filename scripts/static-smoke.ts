@@ -98,12 +98,48 @@ if (!plain.includes("moons create my-app")) {
 }
 console.log(`  audit render: ${audited} halaman, tanpa [object Promise]`);
 
+// Hygiene statis: tree deploy bebas canary & tool build-time.
+const TEXT_EXT = new Set([".js", ".mjs", ".html", ".css", ".json", ".txt", ".xml", ".md", ".map"]);
+const FORBIDDEN = ["MOONS_DOCS_CANARY_3f9c21", "prepare-content", "createHighlighter"];
+for await (const file of new Bun.Glob("**/*").scan({ cwd: root })) {
+  if (!TEXT_EXT.has(extname(file))) {
+    continue;
+  }
+  const full = join(root, file);
+  if (!statSync(full).isFile()) {
+    continue;
+  }
+  const text = await Bun.file(full).text();
+  for (const marker of FORBIDDEN) {
+    if (text.includes(marker)) {
+      throw new Error(`[docs] "${marker}" bocor ke dist/${file}`);
+    }
+  }
+}
+if (existsSync(join(root, "content.json"))) {
+  throw new Error("[docs] content.json ikut ter-deploy (harus SSR-only)");
+}
+console.log("  hygiene: tanpa canary, tool build-time, atau content.json di dist");
+
 const executablePath = process.env["MOONS_CHROME_EXECUTABLE"];
 const browser = await chromium.launch(executablePath === undefined ? {} : { executablePath });
+const permissions: Array<"clipboard-read" | "clipboard-write"> = [
+  "clipboard-read",
+  "clipboard-write",
+];
 try {
-  const page = await browser.newPage();
+  // ---------- Desktop ----------
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 800 },
+    permissions,
+  });
+  const page = await context.newPage();
   await page.goto(`${base}/`);
   await page.waitForLoadState("networkidle");
+
+  if (await page.locator(".nav-toggle").isVisible()) {
+    throw new Error("[docs] nav-toggle terlihat di desktop");
+  }
 
   let fullReload = false;
   page.on("load", () => {
@@ -127,14 +163,182 @@ try {
     throw new Error("[docs] konteks window hilang setelah navigasi");
   }
 
+  // Tema: dua arah + background benar-benar berubah.
+  const themeState = (): Promise<string> =>
+    page.evaluate(() => document.documentElement.dataset.theme ?? "light");
+  const bodyBg = (): Promise<string> =>
+    page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  const initialTheme = await themeState();
+  const initialBg = await bodyBg();
   await page.click("[data-theme-toggle]");
-  const theme = await page.evaluate(() => document.documentElement.dataset.theme ?? "light");
-  if (theme !== "dark") {
-    throw new Error("[docs] theme toggle tidak mengubah tema");
+  const flippedTheme = await themeState();
+  const flippedBg = await bodyBg();
+  if (flippedTheme === initialTheme) {
+    throw new Error("[docs] theme toggle tidak mengubah state");
   }
+  if (flippedBg === initialBg) {
+    throw new Error("[docs] background tidak berubah saat tema berganti");
+  }
+  await page.click("[data-theme-toggle]");
+  if ((await themeState()) !== initialTheme) {
+    throw new Error("[docs] tema tidak kembali setelah toggle kedua");
+  }
+  console.log("  tema: light ⇄ dark dua arah + background berubah ✓");
+
+  // Code-copy di prose (blok kode dokumentasi).
+  const proseCopy = page.locator(".prose .code-block button[data-code-copy]").first();
+  await proseCopy.scrollIntoViewIfNeeded();
+  const codeText =
+    (await proseCopy.locator("xpath=following-sibling::pre/code").first().textContent()) ?? "";
+  await proseCopy.click();
+  await page.waitForFunction(
+    () =>
+      document.querySelector(".prose .code-block button[data-code-copy]")?.textContent === "Copied",
+  );
+  const clipProse = await page.evaluate(() => navigator.clipboard.readText());
+  if (clipProse.trim() !== codeText.trim()) {
+    throw new Error("[docs] clipboard prose tidak sama dengan isi blok kode");
+  }
+  console.log("  code-copy (prose) ✓");
+
+  // TOC: klik anchor → target ada + hash diterapkan.
+  const tocLink = page.locator(".docs-toc a").first();
+  const tocHref = await tocLink.getAttribute("href");
+  if (tocHref === null || !tocHref.startsWith("#")) {
+    throw new Error("[docs] TOC tidak memuat anchor");
+  }
+  await tocLink.click();
+  const targetExists = await page.evaluate(
+    (id) => document.getElementById(id) !== null,
+    tocHref.slice(1),
+  );
+  if (!targetExists) {
+    throw new Error(`[docs] target TOC ${tocHref} tidak ada di halaman`);
+  }
+  if (!page.url().endsWith(tocHref)) {
+    throw new Error("[docs] hash TOC tidak diterapkan di URL");
+  }
+  console.log("  TOC anchor ✓");
+
+  // Prev/Next: berpindah halaman lalu kembali.
+  const nextHref = await page.locator(".pager-link.next").getAttribute("href");
+  if (nextHref === null) {
+    throw new Error("[docs] pager next tidak ada");
+  }
+  const h1Before = await page.locator("h1").textContent();
+  await page.click(".pager-link.next");
+  await page.waitForURL(`**${nextHref}`);
+  const h1After = await page.locator("h1").textContent();
+  if (h1After === h1Before) {
+    throw new Error("[docs] pager next tidak berpindah halaman");
+  }
+  await page.click(".pager-link.prev");
+  await page.waitForURL("**/start/quickstart");
+  console.log("  prev/next ✓");
+
+  // Search: dialog Pagefind, query, hasil, lalu tutup.
+  await page.click(".search-button");
+  await page.locator(".search-overlay").waitFor({ state: "visible" });
+  await page.fill(".search-input", "serverFn");
+  await page.waitForFunction(
+    () => document.querySelectorAll(".search-results li").length > 0,
+    undefined,
+    { timeout: 15_000 },
+  );
+  const firstResult =
+    (await page.locator(".search-results li .search-title").first().textContent()) ?? "";
+  if (firstResult.trim().length === 0) {
+    throw new Error("[docs] hasil pencarian kosong");
+  }
+  await page.click(".search-backdrop");
+  await page.locator(".search-overlay").waitFor({ state: "hidden" });
+  console.log("  search (Pagefind) ✓");
+
+  // Code-copy di landing (perintah install) + kembali lewat brand link.
+  await page.click('header a[href="/"]');
+  await page.waitForURL(`${base}/`);
+  const installText = (await page.locator(".install pre code").first().textContent()) ?? "";
+  await page.click(".install button[data-code-copy]");
+  await page.waitForFunction(
+    () => document.querySelector(".install button[data-code-copy]")?.textContent === "Copied",
+  );
+  const clipLanding = await page.evaluate(() => navigator.clipboard.readText());
+  if (clipLanding.trim() !== installText.trim()) {
+    throw new Error("[docs] clipboard landing tidak sama dengan perintah install");
+  }
+  console.log("  code-copy (landing) ✓");
+  await context.close();
+
+  // ---------- Mobile ----------
+  const mobile = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    permissions,
+  });
+  const mpage = await mobile.newPage();
+  await mpage.goto(`${base}/start/quickstart`);
+  await mpage.waitForLoadState("networkidle");
+
+  if (!(await mpage.locator(".nav-toggle").isVisible())) {
+    throw new Error("[docs] nav-toggle tidak terlihat di mobile");
+  }
+  if (await mpage.locator(".docs-sidebar").isVisible()) {
+    throw new Error("[docs] sidebar terlihat sebelum menu dibuka (mobile)");
+  }
+
+  await mpage.click(".nav-toggle");
+  console.log("    menu dibuka…");
+  await mpage.waitForFunction(
+    () => document.querySelector(".docs-shell")?.classList.contains("nav-open") ?? false,
+  );
+  if (!(await mpage.locator(".docs-sidebar").isVisible())) {
+    throw new Error("[docs] sidebar tidak muncul setelah menu dibuka");
+  }
+
+  const firstNav = mpage.locator(".docs-sidebar .docs-nav a").first();
+  const navHref = await firstNav.getAttribute("href");
+  if (navHref === null) {
+    throw new Error("[docs] sidebar link tanpa href");
+  }
+  await firstNav.click();
+  console.log("    navigasi sidebar…");
+  await mpage.waitForURL(`**${navHref}`);
+
+  // Navigasi klien me-render ulang shell → menu tertutup otomatis.
+  await mpage.waitForFunction(
+    () => !(document.querySelector(".docs-shell")?.classList.contains("nav-open") ?? true),
+  );
+  if (await mpage.locator(".docs-sidebar").isVisible()) {
+    throw new Error("[docs] sidebar masih terbuka setelah navigasi (mobile)");
+  }
+
+  // Buka lagi lalu tutup manual lewat toggle.
+  await mpage.click(".nav-toggle");
+  console.log("    buka-tutup manual…");
+  await mpage.waitForFunction(
+    () => document.querySelector(".docs-shell")?.classList.contains("nav-open") ?? false,
+  );
+  await mpage.click(".nav-toggle");
+  await mpage.waitForFunction(
+    () => !(document.querySelector(".docs-shell")?.classList.contains("nav-open") ?? true),
+  );
+
+  const mobileThemeBefore = await mpage.evaluate(
+    () => document.documentElement.dataset.theme ?? "light",
+  );
+  await mpage.click("[data-theme-toggle]");
+  const mobileThemeAfter = await mpage.evaluate(
+    () => document.documentElement.dataset.theme ?? "light",
+  );
+  if (mobileThemeAfter === mobileThemeBefore) {
+    throw new Error("[docs] theme toggle tidak bekerja di mobile");
+  }
+  await mobile.close();
+  console.log("  mobile: menu, navigasi, tutup, tema ✓");
 } finally {
   await browser.close();
 }
 
-console.log("OK static-smoke (docs)");
+console.log(
+  "OK static-smoke (docs): halaman inti, hygiene, navigasi klien, tema, code-copy, TOC, prev/next, search, mobile",
+);
 process.exit(0);

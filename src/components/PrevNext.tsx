@@ -1,8 +1,8 @@
 import type { NavNeighbor } from "../lib/content-types";
 
 export function PrevNext(props: {
-  prev?: NavNeighbor;
-  next?: NavNeighbor;
+  prev?: NavNeighbor | undefined;
+  next?: NavNeighbor | undefined;
 }) {
   if (props.prev === undefined && props.next === undefined) {
     return null;

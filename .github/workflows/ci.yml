@@ -16,6 +16,7 @@ jobs:
         run: git clone --depth 1 https://github.com/moonsjs/cookbook "$RUNNER_TEMP/cookbook"
       - run: bun install --frozen-lockfile
       - run: COOKBOOK_DIR="$RUNNER_TEMP/cookbook" bun run check
+      - run: bunx moons check
       - run: bunx playwright install --with-deps chromium
       - run: bun run build
       - run: bun run smoke

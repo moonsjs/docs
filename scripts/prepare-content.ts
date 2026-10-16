@@ -202,6 +202,8 @@ function resolveHref(fromRepoRel: string, href: string): string {
 interface RenderResult {
   html: string;
   toc: TocEntry[];
+  /** Judul dari H1 pertama (bila ada); dipakai saat frontmatter tanpa title. */
+  title?: string;
 }
 
 /** Satu blok kode → HTML shiki (dual theme). */
