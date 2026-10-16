@@ -719,6 +719,26 @@ for (const [oldPath, newPath] of Object.entries(OLD_TO_NEW)) {
 }
 writeFileSync(join(repoRoot, "public", "_redirects"), `${redirects.join("\n")}\n`);
 
+// sitemap.xml + robots.txt (EN root + /id/**).
+const urls: string[] = [`${SITE}/`, `${SITE}/id/`];
+for (const slug of Object.keys(pages.en)) {
+  urls.push(`${SITE}/${slug}/`);
+}
+for (const slug of Object.keys(pages.id)) {
+  urls.push(`${SITE}/id/${slug}/`);
+}
+urls.sort();
+writeFileSync(
+  join(repoRoot, "public", "sitemap.xml"),
+  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+    urls.map((url) => `  <url><loc>${url}</loc></url>`).join("\n") +
+    `\n</urlset>\n`,
+);
+writeFileSync(
+  join(repoRoot, "public", "robots.txt"),
+  `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`,
+);
+
 console.log(
   `OK prepare-content (en ${Object.keys(pages.en).length} · id ${Object.keys(pages.id).length} halaman + raw + llms + redirects)`,
 );

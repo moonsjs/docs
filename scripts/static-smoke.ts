@@ -69,6 +69,8 @@ await expectStatus("/id/start/quickstart", 200);
 await expectStatus("/raw/ai/CONTEXT.md", 200);
 await expectStatus("/llms.txt", 200);
 await expectStatus("/pagefind/pagefind.js", 200);
+await expectStatus("/sitemap.xml", 200);
+await expectStatus("/robots.txt", 200);
 await expectStatus("/_redirects", 200);
 
 const notFound = await expectStatus("/tidak-ada", 404);
