@@ -108,3 +108,7 @@ export default defineConfig({
 ```
 
 The server reads fresh pages from that storage and writes regenerated ones through it. Stale entries are still served while regeneration runs; the leak guard stays fail-closed. `createFileStorage(clientDir)` (exported from `@moonsjs/vite/server`) is the default implementation and a reference for wrappers.
+
+## Dev tools
+
+In `moons dev`, open `/__moons/devtools` for a dev-only overlay: the scanned route table, `src/api` endpoints, the serverFn registry (hash + export + file), and whether the payload scan has a canary configured. Data is rendered fresh on every request and is never part of production builds.

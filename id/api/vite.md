@@ -107,3 +107,7 @@ export default defineConfig({
 ```
 
 Server membaca halaman dari storage itu dan menulis hasil regenerasi lewat storage yang sama. Entri kedaluwarsa tetap disajikan selama regenerasi berjalan; guard kebocoran tetap fail-closed. `createFileStorage(clientDir)` (dari `@moonsjs/vite/server`) adalah implementasi default sekaligus acuan pembungkus.
+
+## Dev tools
+
+Saat `moons dev`, buka `/__moons/devtools` untuk overlay khusus dev: tabel route hasil scan, endpoint `src/api`, registry serverFn (hash + export + file), dan status payload-scan (canary terpasang atau tidak). Datanya selalu segar per request dan tidak ikut build produksi.
