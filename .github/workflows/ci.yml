@@ -9,14 +9,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Clone cookbook (verifikasi tautan resep)
-        uses: actions/checkout@v5
-        with:
-          repository: moonsjs/cookbook
-          path: examples/cookbook
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.2
+      - name: Clone cookbook (verifikasi tautan resep)
+        run: git clone --depth 1 https://github.com/moonsjs/cookbook "$RUNNER_TEMP/cookbook"
       - run: bun install --frozen-lockfile
-      - run: bun run check
+      - run: COOKBOOK_DIR="$RUNNER_TEMP/cookbook" bun run check
+      - run: bunx playwright install --with-deps chromium
       - run: bun run build
+      - run: bun run smoke

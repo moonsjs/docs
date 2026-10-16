@@ -1,29 +1,41 @@
 # Moons documentation
 
-Sumber situs **https://docs.devmoon.net** (Astro Starlight, deploy lewat
-Cloudflare Pages). **English adalah locale default**; Bahasa Indonesia tersedia
-di `/id/**` dengan slug yang sama.
+Sumber situs **https://docs.devmoon.net** — dibangun **dengan Moons sendiri**
+(dogfooding): seluruh halaman di-prerender menjadi file statis dan dideploy di
+Cloudflare Pages, dengan navigasi klien tetap hidup dari payload `#__moons_data`.
 
-## Isi repo
+## Cara kerja
 
-- `site/**` — halaman English (root locale; slug diturunkan dari nama file).
-- `id/site/**` — terjemahan Bahasa Indonesia (slug sama, tampil di `/id/**`).
-- `api/**`, `migration/**`, `manifest.md` — referensi English (versi ID ada di `id/**`).
-- `ai/**` — konteks agen + resep (English; menu pada kedua locale).
-- `llms.txt` — indeks konteks agen (dibundel juga di paket `@moonsjs/cli`).
-- `src/pages/index.astro` — landing page custom (`/`).
-- `src/styles/custom.css` — tema situs.
-- `scripts/build.ts` — generate `src/content/docs/**`, `public/raw/**`,
-  `public/llms.txt`, `public/llms-full.txt`, `public/_redirects` (redirect URL lama).
-- `scripts/check-public.ts` — guard rujukan internal; `scripts/check-links.ts` —
-  anti-drift tautan (termasuk verifikasi tautan cookbook).
+- Konten berupa markdown: `site/**` (EN, default), `id/**` (Indonesia),
+  `api/**`, `migration/**`, `manifest.md`, dan `ai/**` (konteks agen).
+- `scripts/prepare-content.ts` merender markdown → HTML (marked + shiki) lalu
+  menulis `src/generated/content.json`, `public/raw/**`, `llms.txt`,
+  `llms-full.txt`, dan `_redirects`. **Tautan internal divalidasi di sini** —
+  tautan rusak = build gagal.
+- Aplikasi (`src/routes/**`) membaca konten hanya di server lewat plugin Vite
+  `virtual:moons-docs-content` (environment `ssr`); browser memakai payload
+  `#__moons_data`, sehingga bundle klien tetap ramping.
+- `moons build` melakukan prerender seluruh route (`prerender + paths`) termasuk
+  `404.html`. `scripts/postbuild.ts` menjalankan Pagefind dan menyusun `dist/`
+  sebagai tree statis siap-deploy.
+- Pencarian = Pagefind statis. URL lama dialihkan lewat `public/_redirects`.
 
-## Build
+## Perintah
 
 ```bash
 bun install
-bun run check   # butuh cookbook: git clone --depth 1 https://github.com/moonsjs/cookbook examples/cookbook
-bun run build   # generate + astro build → dist/
+bun run content   # regenerate content.json + file public
+bun run dev       # moons dev → http://localhost:3000
+bun run check     # guard (rujukan internal + tautan cookbook; butuh COOKBOOK_DIR)
+bun run build     # content + moons build + postbuild (pagefind, dist/)
+bun run smoke     # static server murni + Playwright (nav, tema, 404)
+```
+
+Untuk `bun run check`, sediakan clone cookbook:
+
+```bash
+git clone --depth 1 https://github.com/moonsjs/cookbook ../moons-cookbook
+# atau: COOKBOOK_DIR=/path/ke/cookbook bun run check
 ```
 
 ## Deploy
@@ -31,11 +43,10 @@ bun run build   # generate + astro build → dist/
 Cloudflare Pages: repository `moonsjs/docs`, build command
 `bun install && bun run build`, output `dist`.
 
-> **Catatan lockfile:** `bun.lock` sengaja ditulis dalam format
-> `lockfileVersion: 1` agar kompatibel dengan image Cloudflare Pages
-> (bun 1.2.15) sekaligus tetap dibaca bun 1.4.x di CI. Jalankan
-> `bun install --frozen-lockfile` (jangan `bun install` polos) supaya lockfile
-> tidak di-upgrade otomatis ke v2. Bila Pages disetel `BUN_VERSION=1.4.2`,
-> lockfile boleh diregenerasi ke v2.
+> **Wajib:** set env **`BUN_VERSION=1.4.2`** di Cloudflare Pages (Production &
+> Preview). Image bawaan CF memakai bun 1.2.15 yang **tidak bisa mem-parse kode
+> minified React 19.3** (`else a: if` → parser error), sehingga prerender gagal.
+> Lockfile repo ini `lockfileVersion: 1` agar tetap terbaca bun lama bila env
+> belum diset.
 
 Bugs dan permintaan: buka Issue di repo ini.
