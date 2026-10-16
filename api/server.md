@@ -105,6 +105,39 @@ function validateSchema<S extends StandardSchemaV1>(schema: S, value: unknown)
   : Promise<{ ok: true; value: InferOutput<S> } | { ok: false; issues: string[] }>;
 ```
 
+## Session cookies
+
+`signCookie(data, secret, { expiresIn? })` returns an HMAC-SHA256–signed value; `verifyCookie(token, secret)` returns the payload or `null` (tampered, malformed, or expired). Secrets shorter than 16 characters are rejected with `E_CONFIG_INVALID`.
+
+```ts
+import { setCookie, signCookie, verifyCookie } from "@moonsjs/server";
+
+const token = await signCookie({ userId }, env("SESSION_SECRET"), { expiresIn: 86_400 });
+setCookie(response, "session", token, { httpOnly: true, secure: true, sameSite: "lax" });
+
+// later — null when the token was tampered with or expired
+const data = await verifyCookie<{ userId: string }>(token, env("SESSION_SECRET"));
+```
+
+## Rate limiting
+
+`createRateLimiter({ limit, windowMs })` returns `{ check(key), reset(key?) }` with a `{ ok, remaining, retryAfterMs }` result — a sliding window per key, kept in memory (one instance). Use it in middleware, `serverFn`, or `src/api`.
+
+```ts
+import { createRateLimiter } from "@moonsjs/server";
+
+const limiter = createRateLimiter({ limit: 30, windowMs: 1_000 });
+
+// middleware
+const permit = limiter.check(req.headers.get("x-forwarded-for") ?? "local");
+if (!permit.ok) {
+  return new Response("Too Many Requests", {
+    status: 429,
+    headers: { "retry-after": String(Math.ceil(permit.retryAfterMs / 1000)) },
+  });
+}
+```
+
 ## Internal notes
 
 - The `__moons_` prefix = framework-internal; the stub uses the `/client`

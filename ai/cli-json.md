@@ -103,6 +103,12 @@ Katalog error machine-readable — sumber terstruktur
 }
 ```
 
+## `moons audit --json`
+
+Shape: `{ ok, counts: { pass, warn, fail }, checks: [{ id, level, title, detail? }] }`.
+
+Check ids: `rpc-inventory`, `env-access`, `cookie-flags`, `headers-csp`, `deploy-kit`, `dist-scan`. Exit code `1` when any check fails (`--strict` also fails on warnings); stdout stays valid JSON and stderr stays silent.
+
 ## Agent loop
 
 ```bash

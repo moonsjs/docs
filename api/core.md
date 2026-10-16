@@ -27,6 +27,33 @@ interface MiddlewareArgs { req: Request; ctx: Ctx; next: () => Promise<Response>
 type Middleware = (args: MiddlewareArgs) => Promise<Response>;
 ```
 
+## Static deploy & runtime
+
+Optional keys that produce production files and runtime behavior:
+
+- `headers` — extra response headers; applied at runtime (when not already set) and written to `_headers` on a static build.
+- `redirects` — `{ from, to, status? }` (301/302/307/308); served at runtime and written to `_redirects`. Skipped while prerendering.
+- `sitemap` — `{ site, exclude? }`; emits `sitemap.xml` from the paths that were actually prerendered.
+- `robots` — `{ sitemap?, disallow? }`; emits `robots.txt`.
+- `hooks` — `onRequest`, `onResponse` (may return a replacement `Response`), `onError`.
+
+```ts
+export default defineConfig({
+  context: async () => ({}),
+  headers: { "x-frame-options": "DENY" },
+  redirects: [{ from: "/old", to: "/new" }],
+  sitemap: { site: "https://example.com" },
+  robots: { disallow: ["/internal"] },
+  hooks: {
+    onResponse: (response) => {
+      response.headers.set("x-app", "docs");
+    },
+  },
+});
+```
+
+Every value is validated strictly at load time; a typo fails the build with `E_CONFIG_INVALID`.
+
 ## Server-only packages
 
 Build gate on the client graph (route/client/shared, transitively) — direct

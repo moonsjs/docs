@@ -14,6 +14,8 @@ Referensi API React (`useSearchParams`, `refresh`, `Link search`) ada di
 | `run_check` | — | `CheckJson` (typegen → tsc → build client/server → prerender) |
 | `search_docs` | `{ query }` | Pencarian konteks: **lokal** (`node_modules/@moonsjs/cli/docs/ai/CONTEXT.md`) → docs.devmoon.net → pages.dev → GitHub raw |
 | `explain_error` | `{ code }` | Katalog: trigger + details + suggestions (`found=false` + `validCodes` bila tak dikenal) |
+| `audit` | — | Hasil `moons audit --json` (check keamanan + counts) |
+| `run_typegen` | — | Menjalankan typegen; mengembalikan `{ ok, outDir: ".moons" }` |
 
 Semua tool deterministik; tidak ada panggilan LLM di framework.
 

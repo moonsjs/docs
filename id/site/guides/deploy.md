@@ -56,3 +56,19 @@ docker run -p 3000:3000 --env-file .env my-app
 2. `leakTest.canary` di `vite.config.ts` tetap terpasang (jangan dihapus).
 3. Rahasia hanya lewat `env()` di `*.server.ts`.
 4. Monitoring: `/_moons/health` + log format `[moons] CODE` untuk kegagalan.
+
+## Berkas deploy statis
+
+Tiga key config membuat build menulis yang diharapkan static host — `_redirects`, `sitemap.xml`, `robots.txt` — plus `_headers` dari `headers`. Hanya muncul bila dikonfigurasi, dan hanya dari path yang benar-benar di-prerender.
+
+```ts
+export default defineConfig({
+  context: async () => ({}),
+  headers: { "x-frame-options": "DENY" },
+  redirects: [{ from: "/lama", to: "/baru" }],
+  sitemap: { site: "https://example.com" },
+  robots: { disallow: ["/internal"] },
+});
+```
+
+`redirects` juga berlaku runtime di mode server (dilewati saat prerender); `hooks` hanya berjalan runtime — deployment statis murni tidak punya handler request.

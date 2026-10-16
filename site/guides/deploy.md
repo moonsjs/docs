@@ -40,3 +40,19 @@ docker run -p 3000:3000 --env-file .env my-app
 - [ ] Rate limiting (middleware) on public RPC endpoints.
 - [ ] Health check wired to your platform.
 - [ ] Graceful shutdown drains (SIGTERM) before exit.
+
+## Static deploy files
+
+Three config keys make the build emit what static hosts expect — `_redirects`, `sitemap.xml` and `robots.txt` — plus `_headers` from `headers`. They only appear when configured, and only from paths that were actually prerendered.
+
+```ts
+export default defineConfig({
+  context: async () => ({}),
+  headers: { "x-frame-options": "DENY" },
+  redirects: [{ from: "/old", to: "/new" }],
+  sitemap: { site: "https://example.com" },
+  robots: { disallow: ["/internal"] },
+});
+```
+
+`redirects` also apply at runtime in server mode (skipped during prerender); `hooks` run at runtime only — a fully static deployment has no request handler.

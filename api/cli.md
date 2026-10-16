@@ -17,6 +17,19 @@ The `moons` bin. Run it with `bunx --package @moonsjs/cli moons <command>`
 Exit codes: `0` success; `1` error (formatted for `MoonsError`; stack for
 unexpected errors); `dev` forwards the Vite process exit code.
 
+## `moons audit`
+
+`moons audit [--json] [--strict] [--canary <value>]` is a read-only security pass:
+
+- `rpc-inventory` — every `serverFn` endpoint (file#export) — the surface anyone can call.
+- `env-access` — which `env()` keys each server file reads.
+- `cookie-flags` — warns about `setCookie()` calls missing `HttpOnly`/`Secure`/`SameSite`.
+- `headers-csp` — warns when `headers` has no CSP, or one with `unsafe-inline`/`unsafe-eval`.
+- `deploy-kit` — summary of configured headers/redirects/sitemap/robots.
+- `dist-scan` — scans `dist/client/**` for secret-like env values and your canary; **fails** on a hit.
+
+Exit code is `1` on any failure (`--strict` also fails on warnings). With `--json`, stdout is a single JSON document and stderr stays silent — safe for CI and agents.
+
 ## Programmatic exports
 
 ```ts

@@ -55,4 +55,8 @@ Untuk bukti end-to-end (build + server nyata + canary): build → `moons start`
 → curl/RPC → pastikan `dist/client` bebas canary. Pola yang sama dijalankan
 [cookbook](https://github.com/moonsjs/cookbook) di CI — tiru untuk pipeline Anda.
 
+## Audit keamanan di CI
+
+Jalankan `moons audit --json` setelah build. Ia mendata seluruh endpoint RPC, memetakan bacaan `env()`, memperingatkan cookie tanpa flag dan CSP yang hilang, lalu **gagal** begitu nilai env mirip-rahasia atau canary Anda muncul di `dist/client`.
+
 > Jalankan `bunx moons check` sebelum menyatakan pekerjaan selesai.

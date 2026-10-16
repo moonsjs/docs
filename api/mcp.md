@@ -14,6 +14,8 @@ The React API reference (`useSearchParams`, `refresh`, `Link search`) lives in
 | `run_check` | — | `CheckJson` (typegen → tsc → build client/server → prerender) |
 | `search_docs` | `{ query }` | Context search: **local** (`node_modules/@moonsjs/cli/docs/ai/CONTEXT.md`) → docs.devmoon.net → pages.dev → GitHub raw |
 | `explain_error` | `{ code }` | Catalog: trigger + details + suggestions (`found=false` + `validCodes` when unknown) |
+| `audit` | — | Result of `moons audit --json` (security checks + counts) |
+| `run_typegen` | — | Runs typegen; returns `{ ok, outDir: ".moons" }` |
 
 All tools are deterministic; there are no LLM calls in the framework.
 

@@ -27,6 +27,33 @@ interface MiddlewareArgs { req: Request; ctx: Ctx; next: () => Promise<Response>
 type Middleware = (args: MiddlewareArgs) => Promise<Response>;
 ```
 
+## Deploy statis & runtime
+
+Key opsional yang menghasilkan berkas produksi dan perilaku runtime:
+
+- `headers` — header respons tambahan; dipasang runtime (bila belum ada) dan ditulis ke `_headers` saat build statis.
+- `redirects` — `{ from, to, status? }` (301/302/307/308); dilayani runtime dan ditulis ke `_redirects`. Dilewati saat prerender.
+- `sitemap` — `{ site, exclude? }`; menulis `sitemap.xml` dari path yang benar-benar di-prerender.
+- `robots` — `{ sitemap?, disallow? }`; menulis `robots.txt`.
+- `hooks` — `onRequest`, `onResponse` (boleh mengembalikan `Response` pengganti), `onError`.
+
+```ts
+export default defineConfig({
+  context: async () => ({}),
+  headers: { "x-frame-options": "DENY" },
+  redirects: [{ from: "/lama", to: "/baru" }],
+  sitemap: { site: "https://example.com" },
+  robots: { disallow: ["/internal"] },
+  hooks: {
+    onResponse: (response) => {
+      response.headers.set("x-app", "docs");
+    },
+  },
+});
+```
+
+Semua nilai divalidasi ketat saat load; salah ketik menggagalkan build dengan `E_CONFIG_INVALID`.
+
 ## Paket server-only 
 
 Gate build di graph client (route/client/shared, transitif) — import langsung,

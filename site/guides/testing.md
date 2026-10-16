@@ -36,3 +36,7 @@ test("/ renders SSR with loader data", async () => {
 - Assert SSR markup, payload content, status codes, and response headers
   (`set-cookie`, etc.).
 - Run with `bun test`.
+
+## Security audit in CI
+
+Run `moons audit --json` after the build. It lists every RPC endpoint, maps `env()` reads, warns about cookies without flags and a missing CSP, and fails the moment a secret-like env value or your canary appears in `dist/client`.

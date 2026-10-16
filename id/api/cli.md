@@ -17,6 +17,19 @@ Bin `moons`. Jalankan via `bunx --package @moonsjs/cli moons <command>`
 Exit code: `0` sukses; `1` error (format untuk `MoonsError`, stack untuk
 error tak terduga); `dev` meneruskan exit code proses Vite.
 
+## `moons audit`
+
+`moons audit [--json] [--strict] [--canary <nilai>]` — audit keamanan read-only:
+
+- `rpc-inventory` — semua endpoint `serverFn` (file#export) yang bisa dipanggil siapa pun.
+- `env-access` — kunci `env()` yang dibaca tiap file server.
+- `cookie-flags` — peringatan `setCookie()` tanpa `HttpOnly`/`Secure`/`SameSite`.
+- `headers-csp` — peringatan bila `headers` tanpa CSP, atau memakai `unsafe-inline`/`unsafe-eval`.
+- `deploy-kit` — ringkasan header/redirect/sitemap/robots yang dikonfigurasi.
+- `dist-scan` — memindai `dist/client/**` untuk nilai env mirip-rahasia + canary; **gagal** bila bocor.
+
+Exit code `1` saat ada kegagalan (`--strict` juga menggagalkan peringatan). Dengan `--json`, stdout satu dokumen JSON dan stderr sunyi — aman untuk CI dan agen.
+
 ## Export programatik
 
 ```ts

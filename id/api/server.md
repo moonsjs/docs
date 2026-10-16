@@ -103,6 +103,39 @@ function validateSchema<S extends StandardSchemaV1>(schema: S, value: unknown)
   : Promise<{ ok: true; value: InferOutput<S> } | { ok: false; issues: string[] }>;
 ```
 
+## Cookie sesi
+
+`signCookie(data, secret, { expiresIn? })` mengembalikan nilai bertanda tangan HMAC-SHA256; `verifyCookie(token, secret)` mengembalikan payload atau `null` (tamper, rusak, kedaluwarsa). Secret < 16 karakter ditolak (`E_CONFIG_INVALID`).
+
+```ts
+import { setCookie, signCookie, verifyCookie } from "@moonsjs/server";
+
+const token = await signCookie({ userId }, env("SESSION_SECRET"), { expiresIn: 86_400 });
+setCookie(response, "session", token, { httpOnly: true, secure: true, sameSite: "lax" });
+
+// nanti — null bila token dimanipulasi atau kedaluwarsa
+const data = await verifyCookie<{ userId: string }>(token, env("SESSION_SECRET"));
+```
+
+## Rate limit
+
+`createRateLimiter({ limit, windowMs })` mengembalikan `{ check(key), reset(key?) }` dengan hasil `{ ok, remaining, retryAfterMs }` — sliding window in-memory per kunci. Pakai di middleware, `serverFn`, atau `src/api`.
+
+```ts
+import { createRateLimiter } from "@moonsjs/server";
+
+const limiter = createRateLimiter({ limit: 30, windowMs: 1_000 });
+
+// middleware
+const permit = limiter.check(req.headers.get("x-forwarded-for") ?? "local");
+if (!permit.ok) {
+  return new Response("Terlalu banyak permintaan", {
+    status: 429,
+    headers: { "retry-after": String(Math.ceil(permit.retryAfterMs / 1000)) },
+  });
+}
+```
+
 ## Catatan internal
 
 - Prefiks `__moons_` = internal framework; stub memakai subpath `/client`
