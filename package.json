@@ -6,7 +6,7 @@
     "content": "bun scripts/prepare-content.ts",
     "guard": "bun scripts/check-content.ts",
     "dev": "bun run content && moons dev",
-    "build": "bun run content && moons build && bun scripts/postbuild.ts",
+    "build": "bun run check && bun scripts/postbuild.ts",
     "start": "moons start",
     "check": "bun run content && bun run guard && moons check",
     "smoke": "bun scripts/smoke.ts",

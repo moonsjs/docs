@@ -54,6 +54,18 @@ bun run build
 wrangler deploy
 ```
 
+`bun run build` is **gated by verification**: it runs `bun run check`
+(content → guard → `moons check`: typegen, `tsc`, client/server builds,
+prerender) before `scripts/postbuild.ts` writes the sitemap and `llms.txt`.
+A deploy path that runs `bun run build` cannot ship unverified output — that is
+why CI runs the same command.
+
+Recommended Cloudflare Workers Builds settings (dashboard): build command
+`bun run build`, deploy command `npx wrangler deploy`, preview builds enabled
+for non-`main` branches (previews are verified too, because verification lives
+inside the build). Enable Web Analytics in the dashboard — it is a script
+injection at the edge, no code change here.
+
 - `public/_redirects` keeps old URLs (including the former Indonesian pages)
   working with 301s.
 - `public/_headers` marks hashed assets immutable and keeps `robots.txt`,

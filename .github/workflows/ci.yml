@@ -13,8 +13,8 @@ jobs:
         with:
           bun-version: 1.4.2
       - run: bun install --frozen-lockfile
-      - run: bun run check
       - run: bunx playwright install --with-deps chromium
+      # `bun run build` sudah bergerbang verifikasi (content → guard → moons check → postbuild).
       - run: bun run build
       - run: bun run smoke
   lighthouse:
