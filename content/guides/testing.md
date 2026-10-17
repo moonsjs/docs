@@ -1,9 +1,9 @@
 ---
 title: Testing
-description: Test routes, schemas, and API handlers with bun test, then smoke-test the production build.
+description: Test routes, schemas, and API handlers with moons test, then smoke-test the production build.
 ---
 
-Testing has two layers: in-process tests with `bun test`, and a smoke run against the production build. The first catches component and loader mistakes; the second proves the build, server bundle, and RPC path still work together.
+Testing has two layers: in-process tests with `moons test`, and a smoke run against the production build. The first catches component, loader, and API mistakes; the second proves the build, server bundle, and RPC path still work together.
 
 ## The starter test
 
@@ -44,9 +44,9 @@ test("unknown paths return 404", async () => {
 });
 ```
 
-Run the file with `bun test`. `createTestServer` is exported from `@moonsjs/vite/server` and returns `{ handler, fetch }`. `fetch` accepts a path plus optional `RequestInit` and resolves it against `http://localhost`; it uses an in-memory shell unless you pass one. It handles layouts, loaders, meta, the custom `_404`, and `/_moons/health`.
+Run the file with `moons test`. `createTestServer` is exported from `@moonsjs/vite/server` and returns `{ handler, fetch }`. `fetch` accepts a path plus optional `RequestInit` and resolves it against `http://localhost`; it uses an in-memory shell unless you pass one. It handles layouts, loaders, meta, the custom `_404`, API routes (below), and `/_moons/health`.
 
-Two limits matter. The test server has no API route map, so call `src/api` handlers directly (below). And route modules are imported with Bun, not compiled by Vite: a route that imports a `serverFn` loads the server file without the compile step that gives the function its hash, and fails at import. Use this server for plain loaders; test server-function pages against the built app.
+`moons test` runs `bun test` with a preload from `@moonsjs/vite/testing/preload` that injects the same `serverFn` metadata the build uses (`__hash`, `__file`, `__line`, `__exportName`), so a route module that imports a `serverFn` loads and runs in-process. Arguments are forwarded to Bun: `moons test ./test/example.test.ts` runs that file as a path, while a bare argument acts as a name filter. A plain `bun test` has no preload and fails on the first module that imports a `serverFn`; the preload sets `globalThis.__moonsTestPreload`, which a test can check to skip itself in that mode.
 
 ## Schema tests
 
@@ -68,7 +68,7 @@ The server repeats the check even when a client skips it, so this test covers wh
 
 ## API handlers
 
-`ApiHandlerArgs` is `{ req, params, ctx }`. Call the exported method with a `Request` and a minimal context; it returns a normal `Response`.
+`ApiHandlerArgs` is `{ req, params, ctx }`. A handler returns a normal `Response`, so you can call the exported method directly with a `Request` and a minimal context, or dispatch through `createTestServer` to cover the URL mapping as well.
 
 ```ts
 // src/api/echo.ts
@@ -83,39 +83,53 @@ export async function POST({ req }: ApiHandlerArgs): Promise<Response> {
 }
 ```
 
+Pass the scanned API routes to `createTestServer`: `apiRoutes` takes the output of `scanApiRoutes`, `loadApi` maps each route path to an `import()` of its module, and `apiMiddlewares`/`loadApiMiddleware` wire `src/api` directory middleware the same way. `loadRoute` can stay empty in an API-only test.
+
 ```ts
 // test/echo.test.ts
 import { expect, test } from "bun:test";
-import type { ApiHandlerArgs } from "@moonsjs/server";
-import { POST } from "../src/api/echo";
+import { scanApiRoutes, scanRoutes, type MoonsConfig } from "@moonsjs/core";
+import { createTestServer } from "@moonsjs/vite/server";
+import { join } from "node:path";
 
-const ctx = { requestId: "test" } as ApiHandlerArgs["ctx"];
+const root = join(import.meta.dir, "..");
+const config: MoonsConfig = {
+  routesDir: "src/routes",
+  context: async () => ({ requestId: "test" }),
+};
 
-function call(body: unknown): Promise<Response> {
-  return POST({
-    req: new Request("http://localhost/api/echo", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    }),
-    params: {},
-    ctx,
-  });
-}
+const server = createTestServer({
+  routes: scanRoutes(join(root, "src", "routes")),
+  routesDir: join(root, "src", "routes"),
+  apiRoutes: scanApiRoutes(join(root, "src", "api")),
+  config,
+  loadRoute: {},
+  loadApi: { "/api/echo": async () => import("../src/api/echo") },
+});
 
 test("echo validates its body", async () => {
-  const ok = await call({ message: "hello" });
+  const ok = await server.fetch("/api/echo", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ message: "hello" }),
+  });
   expect(ok.status).toBe(200);
   expect(await ok.json()).toEqual({ message: "hello" });
-  expect((await call({})).status).toBe(400);
+
+  const bad = await server.fetch("/api/echo", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({}),
+  });
+  expect(bad.status).toBe(400);
 });
 ```
 
-An API module that imports a `serverFn` hits the same limit; exercise that through the built app. This tests the handler contract, not the URL mapping; the build checks the exports.
+An API module that imports a `serverFn` loads under `moons test` like any other module; the build still checks the route and handler shapes.
 
 ## Smoke-test the build
 
-`bun test` never runs the Vite transform. The production build does, so finish with one request-level check against the built server. Put this in `scripts/smoke.sh`:
+The in-process tests load modules with Bun rather than through the production build, so finish with one request-level check against the built server. Put this in `scripts/smoke.sh`:
 
 ```bash
 #!/usr/bin/env bash
@@ -158,7 +172,7 @@ jobs:
         with:
           bun-version: latest
       - run: bun install --frozen-lockfile
-      - run: bun test
+      - run: moons test
       - run: bash scripts/smoke.sh
 ```
 

@@ -1,6 +1,6 @@
 ---
 title: CLI
-description: The moons command line for scaffolding, the dev/build/start loop, verification with check, and JSON introspection with routes, fns, errors, and audit.
+description: The moons command line for scaffolding, the dev/build/start loop, verification with check and test, and JSON introspection with routes, fns, errors, and audit.
 ---
 
 The `moons` command is the single entry point for scaffolding, developing, verifying, and shipping a Moons app. Run it directly, or install it as a dev dependency of the project — `moons create` adds it and wires the `bun run dev/build/start/check` scripts to the local copy.
@@ -23,6 +23,7 @@ bunx --package @moonsjs/cli moons create my-app
 | `moons routes [--json]` | Prints the route table from a scan, no build needed; `--kind=<page\|layout\|error\|404\|api>` filters it. |
 | `moons fns [--json]` | Prints the `serverFn` registry from a `*.server.ts` scan. |
 | `moons check [--json]` | Runs the verification pipeline: typegen → `tsc --noEmit` → client build → server build → prerender. |
+| `moons test [args…]` | Runs `bun test` with the Moons server transform preloaded; extra arguments go to Bun. |
 | `moons errors [--json]` | Prints the machine-readable error catalog. |
 | `moons audit [--json]` | Runs the security audit over sources and `dist/client`. |
 
@@ -31,6 +32,10 @@ bunx --package @moonsjs/cli moons create my-app
 - `dev` forwards `SIGTERM`/`SIGINT` to the Vite process and mirrors its exit code. It also writes a CLI-managed log to `.moons/dev.log`.
 - `build` runs three stages: the client bundle, the server bundle, and the prerender entry (`dist/server/prerender.js`). A zero-trust rejection, a canary hit, or a prerender contract error stops the command with a non-zero exit code. The canary check is active when `leakTest.canary` is set in `vite.config.ts`.
 - `start` loads `dist/server/index.js` in-process; it listens on `PORT` (default 3000) and drains in-flight requests on `SIGTERM`. See [Deployment](/guides/deployment).
+
+## Testing
+
+`moons test [args…]` runs `bun test` with a preload that annotates every `*.server.ts(x)` module with the same `serverFn` metadata the build injects (`__hash`, `__file`, `__line`, `__exportName`), so tests can import route modules that call `serverFn`. Arguments are forwarded to Bun unchanged: a bare argument is a test-name filter, while a path such as `moons test ./test/example.test.ts` runs that file. The command exits with Bun's test exit code — `0` when every test passes, non-zero otherwise. See [Testing](/guides/testing) for the test server and API-route options.
 
 ## The check pipeline
 
@@ -86,4 +91,4 @@ The chain stops at the first failing step. With `--json` it prints a document wi
 
 ## Exit codes
 
-`0` means success. `1` covers command errors — a formatted `[moons]` block for known failures, a stack trace for unexpected ones. `check` and `audit` return `1` when a step fails or a check fails, and `audit --strict` also returns `1` on warnings. `dev` forwards the Vite process's exit code. `moons help` prints the command list.
+`0` means success. `1` covers command errors — a formatted `[moons]` block for known failures, a stack trace for unexpected ones. `check` and `audit` return `1` when a step fails or a check fails, and `audit --strict` also returns `1` on warnings. `test` returns Bun's test exit code, and `dev` forwards the Vite process's exit code. `moons help` prints the command list.

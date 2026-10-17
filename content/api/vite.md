@@ -71,6 +71,24 @@ The plugin configures two Vite builds. The client build writes `dist/client` —
 
 `moons build` runs both builds and then executes the prerender entry; a route contract error during prerender fails the command. The server output imports `@moonsjs/vite/server`, the runtime subpath that provides the request handler and the Node server used in production.
 
+## Testing entry
+
+The `@moonsjs/vite/testing` subpath exposes the helpers behind `moons test`:
+
+```ts
+import {
+  moonsTestPlugin,
+  registerMoonsTestPlugin,
+  transformServerModuleForTest,
+} from "@moonsjs/vite/testing";
+
+function transformServerModuleForTest(file: string, projectRoot?: string): string;
+function moonsTestPlugin(projectRoot?: string): BunPlugin;
+function registerMoonsTestPlugin(projectRoot?: string): void;
+```
+
+`transformServerModuleForTest` returns a `*.server.ts(x)` source with the transform-generated `serverFn` metadata (`__hash`, `__file`, `__line`, `__exportName`) injected — the same injection the build performs. `moonsTestPlugin` is a Bun plugin that applies it on load, and `registerMoonsTestPlugin` registers it for the current process. The preload `moons test` passes to `bun test` is published at `@moonsjs/vite/testing/preload`; it registers the plugin and sets `globalThis.__moonsTestPreload`, so a test can detect the preloaded run. See [Testing](/guides/testing) for the workflow.
+
 ## Requirements
 
 The peer dependency is Vite `^8.3.4`. The plugin runs with `enforce: "pre"` so the transform sees modules before any other plugin. The dev server and build toolchain run on Bun, while the generated server output runs on Bun and Node — the runtime subpath uses only `node:*` APIs.

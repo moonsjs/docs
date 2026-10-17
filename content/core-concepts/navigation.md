@@ -3,7 +3,7 @@ title: Navigation & Search Params
 description: Client-side navigation with Link, prefetching, pending UI, search-param parity with loaders, and refresh() after mutations.
 ---
 
-Moons treats the URL as the source of truth. `Link` turns a plain click into a client-side navigation, `useSearchParams()` reflects exactly the query the server rendered with, and `refresh()` re-runs the current route after a mutation.
+Moons treats the URL as the source of truth. `Link` turns a plain click into a client-side navigation, `navigate()` does the same from code, `useSearchParams()` reflects exactly the query the server rendered with, and `refresh()` re-runs the current route after a mutation.
 
 ## Link
 
@@ -28,6 +28,23 @@ export default function BlogIndex() {
 - `params` — values for dynamic segments; required when the route has any, absent otherwise.
 - `search` — query values appended to the URL. Accepts strings, numbers, and booleans; a key with value `undefined` is omitted, which is how you clear a param.
 - `prefetch` — fetch the target document on hover or focus; defaults to `true`.
+
+## Programmatic navigation
+
+`navigate(href, options?)` from `@moonsjs/react` runs the same client-side navigation as a `Link` click, from an event handler or an effect. `href` is a URL path — for a typed route key, use `Link` instead. Pass `{ replace: true }` to replace the current history entry instead of pushing a new one:
+
+```tsx
+import { navigate } from "@moonsjs/react";
+
+navigate("/posts?status=open");
+navigate("/login", { replace: true });
+```
+
+When the client runtime is not active — before hydration, or in a document that never hydrates — the call falls back to a full page load. A bare fragment (`navigate("#details")`) or an external URL is handed to the browser unchanged. After a successful swap the client scrolls to the top, or to the `#fragment` target when the URL has one; the server response does not carry the fragment, so the client restores it. The navigation appears in the pending state like any `Link` click.
+
+## Canonical URLs
+
+With `trailingSlash` set in `moons.config.ts`, `Link` and `navigate` build the canonical form of internal hrefs — adding or removing the trailing slash to match the policy — on the server and in the browser. Clicking those links therefore never triggers a redirect. A raw request to a non-canonical path is still answered with a `308` that preserves the method; the root, `/_moons/**`, and asset paths whose last segment contains a dot are exempt from the policy.
 
 ## What a client-side navigation does
 
@@ -122,4 +139,4 @@ async function onPublish(id: string) {
 
 ## Back and forward
 
-Browser back and forward remain real history navigations. On popstate, Moons re-runs the stored URL through the document pipeline and restores the scroll position it saved before you left that page; a newly opened destination starts at the top.
+Browser back and forward remain real history navigations. On popstate, Moons re-runs the stored URL through the document pipeline and restores the scroll position it saved before you left that page; a newly opened destination starts at the top. A same-document hash change — an in-page `#anchor`, or back/forward between two fragments on the same page — is ignored by the router: the browser performs its normal anchor scroll, and Moons does not re-render or reset the scroll position.

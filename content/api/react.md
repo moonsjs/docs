@@ -1,6 +1,6 @@
 ---
 title: "@moonsjs/react"
-description: Link, the data and navigation hooks, routing signals, and the client hydration entry for React route files.
+description: Link and navigate, the data and navigation hooks, routing signals, and the client hydration entry for React route files.
 ---
 
 `@moonsjs/react` is what route files import: `Link`, the hooks that read per-route data, the routing signals, and the response helpers re-exported from core. The browser entry point lives at the `@moonsjs/react/client` subpath.
@@ -89,14 +89,21 @@ Route keys and params are precise once typegen has generated `.moons/routes.d.ts
 ## Navigation state
 
 ```ts
+interface NavigateOptions {
+  replace?: boolean;
+}
+
+function navigate(href: string, options?: NavigateOptions): void;
 function useNavigation(): { pending: boolean; url: string | null };
 function refresh(): void;
 ```
 
 `useNavigation` reports an in-flight client navigation: `pending` becomes `true` while the next page is fetched, and `url` holds its target. During server rendering it returns the initial snapshot (`pending: false`), keeping the markup deterministic. `refresh()` re-runs the current URL through the document pipeline, re-executing loaders and rendering fresh data without a full reload — call it after a successful mutation.
 
+`navigate(href, options?)` starts the same client-side navigation as a plain `Link` click, from code. `href` is a URL path, so use `Link` for typed route keys; `{ replace: true }` replaces the current history entry instead of pushing a new one. When no client runtime is active the call falls back to a document navigation, and bare fragments and external URLs are always left to the browser. Internal hrefs are normalized against the app's trailing-slash policy, the same way `Link` builds them.
+
 ```tsx
-import { refresh, useNavigation } from "@moonsjs/react";
+import { navigate, refresh, useNavigation } from "@moonsjs/react";
 
 export function Toolbar() {
   const { pending } = useNavigation();
@@ -105,6 +112,9 @@ export function Toolbar() {
       <span>{pending ? "Loading…" : "Ready"}</span>
       <button type="button" onClick={() => refresh()}>
         Refresh
+      </button>
+      <button type="button" onClick={() => navigate("/settings")}>
+        Settings
       </button>
     </div>
   );

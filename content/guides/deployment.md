@@ -3,6 +3,11 @@ title: Deployment
 description: Build output, running the production server, static hosting, edge behavior from config, and Docker.
 ---
 
+`moons dev` and `moons start` run the same request pipeline — context, middleware,
+health, RPC, API routes, and pages go through one handler in both modes. Production
+adds the static transport: prerendered documents from `dist/client`, ETag/304, and
+gzip for text assets.
+
 A Moons deployment is either a long-running server that serves `dist/client` and renders on demand, or a set of static files for hosts without a runtime. The same build produces both.
 
 ## Build output
