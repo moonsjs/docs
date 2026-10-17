@@ -30,18 +30,6 @@
 /ai/recipes/upload/                  /guides/api-routes                           301
 /api                                 /api/core                                    301
 /api/                                /api/core                                    301
-/api/cli                             /api/cli                                     301
-/api/cli/                            /api/cli                                     301
-/api/core                            /api/core                                    301
-/api/core/                           /api/core                                    301
-/api/mcp                             /api/mcp                                     301
-/api/mcp/                            /api/mcp                                     301
-/api/react                           /api/react                                   301
-/api/react/                          /api/react                                   301
-/api/server                          /api/server                                  301
-/api/server/                         /api/server                                  301
-/api/vite                            /api/vite                                    301
-/api/vite/                           /api/vite                                    301
 /concepts/context-env                /core-concepts/context-and-environment       301
 /concepts/context-env/               /core-concepts/context-and-environment       301
 /concepts/errors                     /core-concepts/error-handling                301
@@ -58,8 +46,6 @@
 /concepts/server-fn/                 /core-concepts/server-fn                     301
 /concepts/zero-trust                 /core-concepts/zero-trust                    301
 /concepts/zero-trust/                /core-concepts/zero-trust                    301
-/guides/api-routes                   /guides/api-routes                           301
-/guides/api-routes/                  /guides/api-routes                           301
 /guides/auth-csrf                    /guides/authentication                       301
 /guides/auth-csrf/                   /guides/authentication                       301
 /guides/caching-headers              /guides/deployment                           301
@@ -72,8 +58,6 @@
 /guides/prerender-isr/               /guides/prerender-and-isr                    301
 /guides/rate-limit                   /guides/authentication                       301
 /guides/rate-limit/                  /guides/authentication                       301
-/guides/testing                      /guides/testing                              301
-/guides/testing/                     /guides/testing                              301
 /guides/two-sided-validation         /core-concepts/server-fn                     301
 /guides/two-sided-validation/        /core-concepts/server-fn                     301
 /guides/uploads                      /guides/api-routes                           301
