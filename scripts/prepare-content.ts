@@ -49,6 +49,8 @@ const NAV: Array<{ title: string; slugs: string[] }> = [
       "guides/deployment",
       "guides/prerender-and-isr",
       "guides/testing",
+      "guides/migrating-from-nextjs",
+      "guides/migrating-from-remix",
     ],
   },
   {

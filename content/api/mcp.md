@@ -37,6 +37,7 @@ The same block works in any client that spawns stdio MCP servers, including codi
 | `run_check` | none | Runs the full `moons check` pipeline and returns `{ ok, steps }`. |
 | `search_docs` | `{ query }` | Searches the bundled documentation; returns matching lines with their section headings. |
 | `audit` | none | Runs the security audit: serverFn inventory, `env()` access map, cookie flags, CSP, and a `dist/client` scan. |
+| `diagnose` | none | Runs `moons doctor`: config load, framework versions, duplicate/nested copies, peers, typegen freshness, port availability. |
 | `run_typegen` | none | Regenerates `.moons/routes.d.ts` and `.moons/context.d.ts`; returns `{ ok, outDir }`. |
 | `scaffold_route` | `{ route, kind?, loader? }` | Creates a page or API route file following the conventions; never overwrites an existing file. |
 | `tail_dev_logs` | `{ lines? }` | Returns the last lines of `.moons/dev.log`, the log written by `moons dev` (default 50, max 500). |
@@ -54,7 +55,7 @@ The same block works in any client that spawns stdio MCP servers, including codi
 
 - Every tool answers for one project — the directory the server was started in. There is no argument that switches projects mid-session.
 - Results are JSON documents, which compose with other tools and are safe to feed to another tool or a script.
-- `list_routes`, `get_fn_registry`, `run_check`, `audit`, and `explain_error` are read-only. `scaffold_route` and `run_typegen` write files, only when invoked.
+- `list_routes`, `get_fn_registry`, `run_check`, `audit`, `diagnose`, and `explain_error` are read-only. `scaffold_route` and `run_typegen` write files, only when invoked.
 - The only network access is the documentation fallback in `search_docs`; everything else runs locally against the app and the installed packages.
 
 For the CLI side of these tools, see [CLI](/api/cli). For what `run_check` and `audit` protect, see [Architecture](/architecture).

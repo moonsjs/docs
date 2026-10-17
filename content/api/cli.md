@@ -26,6 +26,23 @@ bunx --package @moonsjs/cli moons create my-app
 | `moons test [args…]` | Runs `bun test` with the Moons server transform preloaded; extra arguments go to Bun. |
 | `moons errors [--json]` | Prints the machine-readable error catalog. |
 | `moons audit [--json]` | Runs the security audit over sources and `dist/client`. |
+| `moons doctor [--json]` | Diagnoses the project: config load, `@moonsjs/*` versions, duplicate/nested copies, peers, typegen freshness, and port availability. `--strict` also fails on warnings. |
+
+
+## Diagnosing a project
+
+`moons doctor` is the first command to run when something feels off. It checks, in one pass:
+
+- `project.config` — `moons.config.ts` exists and loads.
+- `project.canary` — `vite.config.ts` configures `leakTest.canary`.
+- `deps.installed` / `deps.peer` — `@moonsjs/*`, `react`, `react-dom`, `zod` are installed.
+- `deps.duplicates` — exactly one copy of each `@moonsjs/*` package is resolvable. Two copies mean two module instances in one process, which silently breaks process-wide state (response helpers, request context).
+- `deps.versions` — all framework packages come from one release minor.
+- `typegen.fresh` — `.moons/*.d.ts` exists and is not older than `src/routes`.
+- `port.availability` — the `PORT` (default 3000) is free for `moons dev` / `moons start`.
+
+Exit code is `1` when any check fails; warnings keep exit `0` unless you pass `--strict`. `--json` prints a stable shape (see the machine-readable schema in the AI pack) for agents and CI.
+
 
 ## Dev, build, and start
 
