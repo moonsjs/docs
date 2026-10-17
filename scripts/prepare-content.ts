@@ -267,6 +267,40 @@ writeFileSync(
 writeFileSync(join(outDir, "search.json"), JSON.stringify(search));
 writeFileSync(join(outDir, "showcase.json"), JSON.stringify(showcase));
 
+// Root llms.txt: agent entry point. Postbuild copies it into dist/client, and
+// the CLI bundle ships the same file.
+const sectionBlocks = nav.map((section) =>
+  [
+    `## ${section.title}`,
+    ...section.items.map((item) => {
+      const page = pages[item.href.slice(1)];
+      return page === undefined
+        ? `- [${item.title}](https://docs.devmoon.net${item.href})`
+        : `- [${item.title}](https://docs.devmoon.net${item.href}): ${page.description}`;
+    }),
+    "",
+  ].join("\n"),
+);
+const llms = [
+  "# Moons",
+  "",
+  "> Moons is a full-stack TypeScript framework (file routing, SSR, React hydration)",
+  "> whose single guarantee is zero-trust: `*.server.ts` modules become typed RPC",
+  "> stubs, and leaking server code fails the build.",
+  "",
+  "Site: https://docs.devmoon.net",
+  "Agent context bundled with the CLI: `node_modules/@moonsjs/cli/docs/ai/CONTEXT.md`",
+  "(also used by `moons-mcp` `search_docs`).",
+  "",
+  ...sectionBlocks,
+  "## Packages",
+  "",
+  "`@moonsjs/core` · `@moonsjs/server` · `@moonsjs/react` · `@moonsjs/vite` ·",
+  "`@moonsjs/cli` · `@moonsjs/mcp` — developed in the open at github.com/moonsjs.",
+  "",
+].join("\n");
+writeFileSync(join(root, "llms.txt"), llms);
+
 const planned = Object.values(pages).filter((page) => page.planned).length;
 console.log(
   `[docs] content ready — ${flat.length} pages (${planned} planned) · version ${version} · search ${search.length}`,

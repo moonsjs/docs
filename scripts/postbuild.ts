@@ -21,6 +21,7 @@ const content = JSON.parse(readFileSync(generated, "utf8")) as {
   pages: Record<string, { title: string; description: string }>;
 };
 const urls = ["/", ...Object.keys(content.pages).map((slug) => `/${slug}`)];
+const rootLlms = join(repoRoot, "llms.txt");
 
 const sitemap = [
   '<?xml version="1.0" encoding="UTF-8"?>',
@@ -31,22 +32,9 @@ const sitemap = [
 ].join("\n");
 writeFileSync(join(clientDir, "sitemap.xml"), sitemap);
 
-const llms = [
-  "# Moons",
-  "",
-  "> Full-stack TypeScript framework with a build-time zero-trust boundary:",
-  "> server-only modules become typed RPC stubs, and leaking server code fails the build.",
-  "",
-  "## Documentation",
-  "",
-  ...urls.map((url) => {
-    const page = content.pages[url.slice(1)];
-    return page === undefined
-      ? `- [Moons](${SITE}/)`
-      : `- [${page.title}](${SITE}${url}): ${page.description}`;
-  }),
-  "",
-].join("\n");
-writeFileSync(join(clientDir, "llms.txt"), llms);
+if (!existsSync(rootLlms)) {
+  throw new Error("[docs] llms.txt missing — run `bun run content` first");
+}
+writeFileSync(join(clientDir, "llms.txt"), readFileSync(rootLlms, "utf8"));
 
 console.log(`[docs] postbuild: sitemap.xml + llms.txt (${urls.length} URLs)`);

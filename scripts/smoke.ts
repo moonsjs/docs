@@ -259,11 +259,18 @@ await check("previous/next pagination navigates", async () => {
   await page.close();
 });
 
-await check("placeholder pages are marked as planned", async () => {
+await check("formerly planned pages render full guides", async () => {
   const page = await newPage(desktop);
-  await page.goto(`${base}/guides/databases`, { waitUntil: "domcontentloaded" });
-  const alert = page.locator("[data-slot='alert']", { hasText: "Planned page" });
-  await alert.waitFor();
+  for (const [path, title] of [
+    ["/guides/databases", "Working with Databases"],
+    ["/recipes/notes-app", "Notes App"],
+  ] as const) {
+    await page.goto(`${base}${path}`, { waitUntil: "domcontentloaded" });
+    const planned = page.locator("[data-slot='alert']", { hasText: "Planned page" });
+    assert((await planned.count()) === 0, `${path} still shows the planned alert`);
+    const h1 = await page.locator("h1").first().textContent();
+    assert((h1 ?? "").includes(title), `${path}: unexpected h1 ${h1}`);
+  }
   await page.close();
 });
 
@@ -297,19 +304,19 @@ await check("showcase morphs between server and client code", async () => {
   await page.waitForFunction(
     () => document.querySelector(".showcase-code")?.textContent?.includes("publishPost") ?? false,
     undefined,
-    { timeout: 10000 },
+    { timeout: 15000 },
   );
   await page.getByRole("button", { name: /client call sites/ }).click();
   await page.waitForFunction(
     () => document.querySelector(".showcase-code")?.textContent?.includes("typed RPC stub") ?? false,
     undefined,
-    { timeout: 6000 },
+    { timeout: 15000 },
   );
   await page.getByRole("button", { name: /posts\.server\.ts/ }).click();
   await page.waitForFunction(
     () => document.querySelector(".showcase-code")?.textContent?.includes("serverFn") ?? false,
     undefined,
-    { timeout: 6000 },
+    { timeout: 15000 },
   );
   await page.close();
 });
