@@ -279,10 +279,14 @@ await check("hero terminal types the full command", async () => {
   await page.goto(base, { waitUntil: "domcontentloaded" });
   // Assert the VISUAL terminal (not the sr-only copy): the typed text must
   // reach the complete command, character for character.
+  // SSR renders the full command (count = TOTAL) but hydration resets it to 0
+  // and types it out. Waiting on text alone races hydration; `data-terminal-state`
+  // only becomes "done" after the client-side animation finishes (or skips
+  // immediately under prefers-reduced-motion).
   await page.waitForFunction(
-    () => document.querySelector("[data-terminal]")?.textContent?.includes("bun run dev") ?? false,
+    () => document.querySelector('[data-terminal][data-terminal-state="done"]') !== null,
     undefined,
-    { timeout: 20000 },
+    { timeout: 30000 },
   );
   const typed = await page.evaluate(() =>
     Array.from(document.querySelectorAll("[data-terminal] p"))

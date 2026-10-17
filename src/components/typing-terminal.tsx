@@ -42,8 +42,10 @@ function charDelay(index: number): number {
 
 export function TypingTerminal(props: { className?: string | undefined }) {
   const [count, setCount] = useState(TOTAL);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    setHydrated(true);
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       return;
     }
@@ -61,7 +63,12 @@ export function TypingTerminal(props: { className?: string | undefined }) {
         timer = setTimeout(tick, charDelay(index));
       }
     };
+    let started = false;
     const start = (): void => {
+      if (started) {
+        return;
+      }
+      started = true;
       timer = setTimeout(tick, 500);
     };
     if (document.readyState === "complete") {
@@ -69,8 +76,12 @@ export function TypingTerminal(props: { className?: string | undefined }) {
     } else {
       window.addEventListener("load", start, { once: true });
     }
+    // Watchdog: a slow network event (fonts, analytics) must not leave the
+    // terminal empty after hydration.
+    const watchdog = setTimeout(start, 2500);
     return () => {
       cancelled = true;
+      clearTimeout(watchdog);
       window.removeEventListener("load", start);
       if (timer !== undefined) {
         clearTimeout(timer);
@@ -111,6 +122,7 @@ export function TypingTerminal(props: { className?: string | undefined }) {
       </p>
       <div
         data-terminal=""
+        data-terminal-state={hydrated ? (done ? "done" : "typing") : "idle"}
         aria-hidden="true"
         className="space-y-1.5 text-left font-mono text-[13px] leading-6 text-muted-foreground"
       >
