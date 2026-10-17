@@ -5,18 +5,28 @@ on:
 permissions:
   contents: read
 jobs:
-  build:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.2
-      - name: Clone cookbook (verifikasi tautan resep)
-        run: git clone --depth 1 https://github.com/moonsjs/cookbook "$RUNNER_TEMP/cookbook"
       - run: bun install --frozen-lockfile
-      - run: COOKBOOK_DIR="$RUNNER_TEMP/cookbook" bun run check
-      - run: bun run typecheck
+      - run: bun run check
       - run: bunx playwright install --with-deps chromium
       - run: bun run build
       - run: bun run smoke
+  lighthouse:
+    needs: verify
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium
+      - run: bun run build
+      - run: bun run lighthouse

@@ -1,42 +1,44 @@
+/** Shapes produced by `scripts/prepare-content.ts` (src/generated/content.json). */
+
 export interface TocEntry {
-  depth: number;
   id: string;
   text: string;
+  depth: 2 | 3;
+}
+
+export interface NavItem {
+  title: string;
+  href: string;
+  planned: boolean;
+}
+
+export interface NavSection {
+  title: string;
+  items: NavItem[];
 }
 
 export interface PageData {
   slug: string;
   title: string;
   description: string;
+  planned: boolean;
   html: string;
   toc: TocEntry[];
+  prev?: { title: string; href: string };
+  next?: { title: string; href: string };
 }
 
-export interface SidebarItem {
-  label: string;
-  /** slug internal (href dihitung dari locale). */
-  slug?: string;
-  /** tautan absolut/luar (mis. cookbook, halaman EN untuk locale ID). */
-  href?: string;
-}
-
-export interface SidebarGroup {
-  label: string;
-  items: SidebarItem[];
-}
-
-export interface NavNeighbor {
-  label: string;
+export interface SearchRecord {
   href: string;
-}
-
-export interface LocaleContent {
-  pages: Record<string, PageData>;
-  sidebar: SidebarGroup[];
-  prevNext: Record<string, { prev?: NavNeighbor; next?: NavNeighbor }>;
+  title: string;
+  section: string;
+  description: string;
+  headings: string[];
+  body: string;
 }
 
 export interface DocsContent {
-  en: LocaleContent;
-  id: LocaleContent;
+  version: string;
+  nav: NavSection[];
+  pages: Record<string, PageData>;
 }

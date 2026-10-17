@@ -1,7 +1,18 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "noEmit": true
+    "noEmit": true,
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
   },
-  "include": ["src", ".moons/**/*.d.ts", "moons.config.ts", "vite.config.ts", "scripts"]
+  "include": [
+    "src",
+    "scripts",
+    ".moons/**/*.d.ts",
+    "moons.config.ts",
+    "vite.config.ts"
+  ]
 }
