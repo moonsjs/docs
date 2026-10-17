@@ -8,9 +8,10 @@
     "dev": "bun run content && moons dev",
     "build": "bun run check && bun scripts/postbuild.ts",
     "start": "moons start",
-    "check": "bun run content && bun run guard && moons check",
+    "check": "bun run content && bun run guard && bun run lint && moons check",
     "smoke": "bun scripts/smoke.ts",
-    "lighthouse": "bash scripts/lighthouse.sh"
+    "lighthouse": "bash scripts/lighthouse.sh",
+    "lint": "bun scripts/lint-commands.ts"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.6",

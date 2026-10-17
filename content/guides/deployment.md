@@ -1,14 +1,14 @@
 ---
 title: Deployment
-description: Build output, running the production server, static hosting, edge behavior from config, and Docker.
+description: Build output, running the production server, static hosting, headers and redirects from config, and Docker.
 ---
 
 `moons dev` and `moons start` run the same request pipeline — context, middleware,
 health, RPC, API routes, and pages go through one handler in both modes. Production
 adds the static transport: prerendered documents from `dist/client`, ETag/304, and
 gzip for text assets.
-The production host is `Bun.serve` on Bun and `node:http` on Node; both run the
-same pipeline (`MOONS_SERVER` overrides the choice).
+Develop on Bun, deploy on Bun or Node: the production host is `Bun.serve` on Bun and
+`node:http` on Node, and both run the same pipeline (`MOONS_SERVER` overrides the choice).
 
 A Moons deployment is either a long-running server that serves `dist/client` and renders on demand, or a set of static files for hosts without a runtime. The same build produces both.
 
@@ -26,7 +26,7 @@ A Moons deployment is either a long-running server that serves `dist/client` and
 `moons start` loads `dist/server/index.js` in-process and sets `NODE_ENV=production` when the shell has not set it. The port comes from `PORT`, defaulting to `3000`.
 
 ```bash
-PORT=3000 moons start
+PORT=3000 bun run start
 ```
 
 If you launch `bun dist/server/index.js` yourself, set `NODE_ENV=production` explicitly, as the Docker example below does. Production mode also stops sending error details to clients.
@@ -69,7 +69,7 @@ Everything in `dist/client` can be served by a plain static host, but the host m
 
 `sitemap.xml` lists only prerendered paths. A page that renders per request belongs on the server deployment.
 
-## Edge behavior from config
+## Headers, redirects, and sitemap
 
 - `headers` — added to every runtime response unless the response already sets that name; also written to `_headers` for static deploys.
 - `redirects` — exact path matches (trailing slash ignored), statuses `301` (default), `302`, `307`, `308`; applied before routes and hooks, and skipped during prerender.

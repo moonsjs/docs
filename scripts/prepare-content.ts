@@ -52,6 +52,8 @@ const NAV: Array<{ title: string; slugs: string[] }> = [
       "guides/testing",
       "guides/migrating-from-nextjs",
       "guides/migrating-from-remix",
+      "benchmarks",
+      "versioning-and-support",
     ],
   },
   {
@@ -64,7 +66,7 @@ const NAV: Array<{ title: string; slugs: string[] }> = [
   },
   {
     title: "Architecture",
-    slugs: ["architecture"],
+    slugs: ["architecture", "security-and-verification", "philosophy"],
   },
 ];
 

@@ -103,7 +103,7 @@ const features: Feature[] = [
   {
     icon: ShieldCheck,
     title: "Zero-trust by design",
-    body: "Server code can never leak into the client bundle. Attempting it fails the build — a hard stop, not a warning.",
+    body: "Server code can't reach the browser. Attempting it fails the build — a hard stop, not a warning.",
     chip: "bg-violet-500/10 text-violet-600 ring-violet-500/25 dark:bg-violet-400/10 dark:text-violet-300 dark:ring-violet-400/25",
     card: "hover:border-violet-500/40 dark:hover:border-violet-400/40",
   },
@@ -120,7 +120,8 @@ const features: Feature[] = [
     body: (
       <>
         Fetch data on the server with <InlineCode>loader</InlineCode>. The return type flows
-        straight into your component via <InlineCode>useLoaderData</InlineCode>.
+        straight into your component via <InlineCode>useLoaderData</InlineCode>. The route module
+        still ships to the browser, so keep secrets in <InlineCode>serverFn</InlineCode>.
       </>
     ),
     chip: "bg-emerald-500/10 text-emerald-600 ring-emerald-500/25 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/25",
@@ -203,7 +204,7 @@ const features: Feature[] = [
     body: (
       <>
         <InlineCode>moons check</InlineCode> runs typegen, TypeScript checking, and both builds.
-        Green means nothing leaks. Click to copy it.
+        Green means the boundary held. Click to copy it.
       </>
     ),
     chip: "bg-blue-500/10 text-blue-600 ring-blue-500/25 dark:bg-blue-400/10 dark:text-blue-300 dark:ring-blue-400/25",
@@ -257,7 +258,7 @@ const faq: Faq[] = [
 const trust = [
   { label: "Leaks fail the build", color: "text-emerald-500" },
   { label: "Typed from route to server", color: "text-brand" },
-  { label: "Runs on Bun + Node", color: "text-brand-2" },
+  { label: "Develop on Bun, deploy on Bun or Node", color: "text-brand-2" },
   { label: "MIT licensed", color: "text-amber-500" },
 ];
 
@@ -373,12 +374,12 @@ export default function Home() {
             >
               The full-stack TypeScript framework that{" "}
               <span className="bg-gradient-to-r from-brand via-violet-500 to-brand-2 bg-clip-text text-transparent dark:from-brand dark:via-violet-400 dark:to-brand-2">
-                can&rsquo;t leak server code
+                fails the build before it ships a leak.
               </span>
             </m.h1>
             <m.p variants={heroItem} className="mt-6 max-w-2xl text-lg text-muted-foreground text-balance">
-              Write routes, loaders, and server functions in one codebase. Moons proves at build
-              time that no server code reached the browser — if it did, the build fails.
+              Server code, secrets, and open endpoints are caught at build time, not in production.
+              Built for teams, and AI agents, that move fast.
             </m.p>
             <m.div variants={heroItem} className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Button asChild size="lg" className="shadow-lg shadow-brand/25">
@@ -544,7 +545,7 @@ export default function Home() {
                     <span className="text-sm leading-relaxed text-muted-foreground">
                       {verifyCopied ? (
                         <span className="font-medium text-brand">
-                          Copied <InlineCode>bun run check</InlineCode> — green means nothing leaks.
+                          Copied <InlineCode>bun run check</InlineCode> — green means the boundary held.
                         </span>
                       ) : (
                         feature.body

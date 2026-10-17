@@ -108,8 +108,8 @@ Build-time errors stop the build before anything runs; runtime errors surface as
 `moons errors` prints every code with a short trigger, and `moons errors --json` emits the same content as JSON:
 
 ```bash
-moons errors          # every code with a short trigger
-moons errors --json   # { moonsVersion, count, errors: [...] }
+bunx moons errors          # every code with a short trigger
+bunx moons errors --json   # { moonsVersion, count, errors: [...] }
 ```
 
 Each entry carries `code`, `trigger`, `details`, and `suggestions`. The same data is exported from `@moonsjs/core` as `MoonsError`, `ERROR_CATALOG`, and `findErrorEntry` (see [@moonsjs/core](/api/core)), so tools and tests can branch on codes instead of parsing messages.

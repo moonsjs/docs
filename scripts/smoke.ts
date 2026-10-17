@@ -127,7 +127,7 @@ await check("home renders hero, version, and 12 feature cards", async () => {
   const page = await newPage(desktop);
   await page.goto(base, { waitUntil: "domcontentloaded" });
   const h1 = await page.locator("h1").first().textContent();
-  assert((h1 ?? "").includes("leak server code"), `unexpected h1: ${h1}`);
+  assert((h1 ?? "").includes("fails the build before it ships a leak"), `unexpected h1: ${h1}`);
   const badge = await page.locator("header + main span", { hasText: /Zero-trust by design · v\d+/ }).first().textContent();
   assert((badge ?? "").includes("Zero-trust by design · v"), `version badge missing: ${badge}`);
   const cards = await page.locator("[data-feature]").count();

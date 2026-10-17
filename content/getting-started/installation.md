@@ -27,10 +27,10 @@ When it finishes, it prints next steps:
 ```bash
 Done! Next steps:
   cd my-app
-  moons dev        # dev server (port 3000)
-  moons check      # verify: typegen -> tsc -> build
-  moons build      # production build (dist/client + dist/server)
-  moons start      # serve the build output
+  bun run dev      # dev server (port 3000)
+  bun run check    # verify: typegen -> tsc -> build
+  bun run build    # production build (dist/client + dist/server)
+  bun run start    # serve the build output
 ```
 
 If `bun install` was skipped (for example because you ran `create` inside another workspace), run it yourself:
@@ -78,6 +78,7 @@ The generated `package.json` exposes a small set of scripts:
     "build": "moons build",
     "start": "moons start",
     "check": "moons check",
+    "test": "moons test",
     "tsc": "tsc"
   }
 }

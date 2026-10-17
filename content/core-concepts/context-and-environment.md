@@ -44,7 +44,9 @@ export default defineConfig({
 
 ## Where ctx is available
 
-Typegen reads the awaited return type of your `context` function and writes a global `Ctx` type to `.moons/context.d.ts`. The dev server regenerates that file when route files change, and `moons check` regenerates it as its first step, so the types and the config never drift. The scaffold's `tsconfig.json` already includes `.moons/**/*.d.ts`.
+Typegen reads the awaited return type of your `context` function and writes a global `Ctx` type to `.moons/context.d.ts`. The dev server regenerates that file when route files change, and `moons check` regenerates it as its first step. The scaffold's `tsconfig.json` already includes `.moons/**/*.d.ts`.
+
+When you change `context()` in `moons.config.ts`, run `moons typegen` (or `moons check`) to regenerate `Ctx`. `moons doctor` compares typegen freshness against `src/routes` only, so a config change on its own is not detected automatically.
 
 With that type in place, `ctx` is typed in all four places server code runs:
 

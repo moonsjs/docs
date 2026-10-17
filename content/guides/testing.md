@@ -129,14 +129,14 @@ An API module that imports a `serverFn` loads under `moons test` like any other 
 
 ## Smoke-test the build
 
-The in-process tests load modules with Bun rather than through the production build, so finish with one request-level check against the built server. Put this in `scripts/smoke.sh`:
+The in-process tests load modules with Bun rather than through the production build, so finish with one request-level check against the built server:
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
+# `bun run check` already builds client + server + prerender.
 bun run check
-bun run build
 PORT=3100 bun run start &
 server=$!
 trap 'kill "$server"' EXIT
@@ -170,10 +170,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.4.2
       - run: bun install --frozen-lockfile
-      - run: moons test
-      - run: bash scripts/smoke.sh
+      - run: bun run check
+      - run: bun run test
 ```
 
-The smoke script runs the typecheck, both builds, and the HTTP request, so continuous integration fails on a broken transform or server bundle, not only on a failed unit test. Keep it in the repository so local and remote runs match.
+`bun run check` covers typegen, typechecking, both builds, and prerender; `bun run test` runs the in-process tests on top. Continuous integration fails on a broken transform or server bundle, not only on a failed unit test.

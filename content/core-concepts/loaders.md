@@ -5,6 +5,8 @@ description: How loader exports run, the LoaderArgs contract, layout loader data
 
 A `loader` gives a route its data. It runs on the server for the first render and again for every client-side navigation, so each URL you visit is rendered with fresh server data rather than stale client state.
 
+> **Loader code ships to the browser.** Route modules are part of the browser bundle: anything written in the file — SQL strings, internal URLs, literals — is public, even if only the loader reads it. Keep secrets in `serverFn` handlers and never return them from a loader.
+
 ## The loader export
 
 Export `loader` from a page or layout module. It receives one argument object, `LoaderArgs`:
@@ -91,7 +93,7 @@ Loader return values are serialized with devalue and embedded in the document as
 
 ## Loader data is public
 
-The serialized result ships inside the HTML in the `__moons_data` script element, so treat loader output as public: anyone can read it with View Source. Never return secrets, tokens, or private records; do credential work in a `serverFn` handler (see [serverFn](/core-concepts/server-fn)) and return only what the page may display. The same applies to loader code — route modules are part of the browser bundle, so a literal API key written in a route file leaks even if only the loader reads it.
+The serialized result ships inside the HTML in the `__moons_data` script element, so treat loader output as public: anyone can read it with View Source. Never return secrets, tokens, or private records; do credential work in a `serverFn` handler (see [serverFn](/core-concepts/server-fn)) and return only what the page may display.
 
 ## Errors and signals from loaders
 

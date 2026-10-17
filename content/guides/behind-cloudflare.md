@@ -42,7 +42,7 @@ Without one of these, anyone who learns the origin address can bypass the proxy 
 
 ## What keeps working unchanged
 
-- **RPC origin checks.** `serverFn` calls still require the `x-moons: 1` header and a matching `Origin`; the URL reconstruction behind the proxy is what makes the comparison correct, and it is covered by the framework's hardening tests.
+- **RPC origin checks.** `serverFn` calls still require the `x-moons: 1` header and a matching `Origin`; the URL reconstruction behind the proxy is what makes the comparison correct, and it is covered by the framework's [hardening tests](https://github.com/moonsjs/Moons/blob/main/quality/e2e/hardening/transport.sh).
 - **Security headers and the leak canary.** `config.headers` and the default headers apply on every response, proxied or not.
 - **ISR storage.** `isr.storage` is your origin-side store; Cloudflare never sees it.
 

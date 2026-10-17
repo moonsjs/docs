@@ -8,8 +8,11 @@ const repoRoot = resolve(import.meta.dir, "..");
 const contentDir = join(repoRoot, "content");
 const generated = join(repoRoot, "src", "generated", "content.json");
 
+// The zero-trust corpus (`quality/e2e/**`) and the benchmarks (`quality/bench/**`)
+// are published evidence: the docs link to them and document their run commands.
+// Other `quality/` paths stay internal references.
 const FORBIDDEN =
-  /§\d|\bPRD\b|Addendum\b|\bdecision \d{3,4}\b|\bdocs\/ai\b|\bquality\/|\bagent context\b|\bdefinition of done\b|Starlight/u;
+  /§\d|\bPRD\b|Addendum\b|\bdecision \d{3,4}\b|\bdocs\/ai\b|\bquality\/(?!e2e\/|bench\/)|\bagent context\b|\bdefinition of done\b|Starlight/u;
 
 const files: string[] = [];
 function walk(dir: string): void {
