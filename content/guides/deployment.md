@@ -7,6 +7,8 @@ description: Build output, running the production server, static hosting, edge b
 health, RPC, API routes, and pages go through one handler in both modes. Production
 adds the static transport: prerendered documents from `dist/client`, ETag/304, and
 gzip for text assets.
+The production host is `Bun.serve` on Bun and `node:http` on Node; both run the
+same pipeline (`MOONS_SERVER` overrides the choice).
 
 A Moons deployment is either a long-running server that serves `dist/client` and renders on demand, or a set of static files for hosts without a runtime. The same build produces both.
 

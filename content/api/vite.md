@@ -71,6 +71,18 @@ The plugin configures two Vite builds. The client build writes `dist/client` —
 
 `moons build` runs both builds and then executes the prerender entry; a route contract error during prerender fails the command. The server output imports `@moonsjs/vite/server`, the runtime subpath that provides the request handler and the Node server used in production.
 
+## Server transports
+
+`moons start` loads `dist/server/index.js`, which picks its HTTP host with `startServer`:
+
+- **Bun runtime** → `Bun.serve` (`startBunServer`).
+- **Node runtime** → `node:http` (`startNodeServer`).
+- `MOONS_SERVER=bun|node` overrides the choice; `bun` outside Bun logs a warning and falls back to Node.
+
+Both transports share one implementation of the observable behavior: static files and the prerender manifest, `isr.storage` with the `dist/client` fallback, weak ETags and `304`, gzip for text assets, trailing-slash `308`s, the RPC body limit (`413` with `E_RPC_BODY_TOO_LARGE`), default security headers, `Cache-Control: immutable` for `/assets/*`, trusted client IP via `security.trustProxy`, access logs, and the graceful SIGTERM drain. The `dev-parity` end-to-end suite runs the same assertion matrix against `moons dev`, `Bun.serve`, and `MOONS_SERVER=node`, so the two hosts cannot drift silently.
+
+On a trivial handler `Bun.serve` is measurably faster than `node:http`; on SSR workloads both are bound by your render code, and the framework adds no measurable difference.
+
 ## Testing entry
 
 The `@moonsjs/vite/testing` subpath exposes the helpers behind `moons test`:
