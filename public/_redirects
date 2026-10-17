@@ -1,5 +1,6 @@
 # Old documentation URLs -> the current information architecture.
 # Static rules only: splats would shadow the more specific rules on Workers.
+/id                                /                                          301
 /ai/cli-json                       /api/cli                                   301
 /ai/context                        /architecture                              301
 /ai/recipes/auth-ctx               /guides/authentication                     301
