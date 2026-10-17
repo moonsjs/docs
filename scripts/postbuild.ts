@@ -2,7 +2,7 @@
 // Postbuild: sitemap + llms.txt for the static export. The deploy points at
 // `dist/client` (see wrangler.jsonc); `dist/server` stays intact for
 // `moons start`.
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const repoRoot = resolve(import.meta.dir, "..");
@@ -37,4 +37,11 @@ if (!existsSync(rootLlms)) {
 }
 writeFileSync(join(clientDir, "llms.txt"), readFileSync(rootLlms, "utf8"));
 
-console.log(`[docs] postbuild: sitemap.xml + llms.txt (${urls.length} URLs)`);
+// Restore the raw context endpoint used by MCP `search_docs` fallbacks
+// (https://docs.devmoon.net/raw/ai/CONTEXT.md) and by older agent tooling.
+const aiDir = join(repoRoot, "ai");
+if (existsSync(aiDir)) {
+  cpSync(aiDir, join(clientDir, "raw", "ai"), { recursive: true });
+}
+
+console.log(`[docs] postbuild: sitemap.xml + llms.txt (${urls.length} URLs) + raw/ai/**`);

@@ -1,5 +1,7 @@
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+/raw/*
+  Cache-Control: public, max-age=600
 /robots.txt
   Cache-Control: public, max-age=600
 /sitemap.xml
