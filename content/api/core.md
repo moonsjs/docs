@@ -45,9 +45,11 @@ An unknown key or wrong shape fails config load with `E_CONFIG_INVALID`. `valida
 | `isr` | `{ storage? }` | not set |
 | `logging` | `{ accessLog?, json?, redact? }` | not set |
 | `trailingSlash` | `"never" \| "always"` | not set |
+| `requestTimeoutMs` | `number` | `30000` |
 
 Behavior notes:
 
+- `requestTimeoutMs` bounds how long a loader, `serverFn`, or API handler may take before the transport answers `504` with `E_REQUEST_TIMEOUT`; `0` disables the limit (the Bun transport's `idleTimeout` is aligned so the framework's `504` wins instead of a silent connection close).
 - `middleware` runs globally before the route tree and receives `{ req, ctx, next }` (see [Middleware](/guides/middleware)). `security.bodyLimitBytes` caps RPC request bodies, `security.serverOnlyPackages` extends the built-in list of packages client code may not import, and `security.trustProxy` should only be `true` behind a proxy that overwrites `x-forwarded-*`.
 - `redirects` statuses are `301`, `302`, `307`, or `308` (default `301`); `sitemap.exclude` and `robots.disallow` take path prefixes; `plugins` accept `name` plus `addRoute`, `addMiddleware`, `extendContext`, `onStart`, `onReady`, and `onShutdown`.
 - `isr.storage` must implement `read(pathname)` and `write(pathname, body)` (see [Prerender & ISR](/guides/prerender-and-isr)); `logging.redact` lists query-param names hidden in access logs.

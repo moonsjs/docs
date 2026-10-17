@@ -57,6 +57,15 @@ export const loader = async ({ params }: LoaderArgs<"/blog/[slug]">) => {
 
 During a client-side navigation, redirects are followed by the document fetch and the history entry is committed with the final URL. A destination that answers 404 or 500 falls back to a full document load, so the boundary page renders exactly as it would on a fresh visit (see [Navigation & Search Params](/core-concepts/navigation)).
 
+## Transport errors
+
+Some failures are answered by the HTTP transport before or around your code, with the same `[moons]` format:
+
+- `E_REQUEST_TIMEOUT` — a handler did not respond within `requestTimeoutMs` (default 30 seconds); the transport answers `504`. The handler keeps running until it settles.
+- `E_RPC_BODY_TOO_LARGE` — an RPC body exceeded `security.bodyLimitBytes`; the transport answers `413` without buffering the whole body.
+
+Transport responses still carry your `headers` config and the default security headers.
+
 ## The [moons] error format
 
 Errors raised by the framework — at build time and at runtime — share one format: a header with the code, a location, a one-line description, an explanation, and actionable suggestions.

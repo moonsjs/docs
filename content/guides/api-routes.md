@@ -63,7 +63,7 @@ export async function PATCH({ req, params }: ApiHandlerArgs): Promise<Response> 
 
 ## Bodies, uploads, and streams
 
-Read bodies with `req.text()`, `req.json()`, `req.formData()`, `req.arrayBuffer()`, or the raw `req.body` stream. Multipart uploads use `formData()`; check `content-length` before reading and each file's `size` after parsing. `security.bodyLimitBytes` applies to RPC calls only, so raw endpoints need their own limit; the transport's 32 MB cap and `413` are a safety net, not a policy.
+Read bodies with `req.text()`, `req.json()`, `req.formData()`, `req.arrayBuffer()`, or the raw `req.body` stream. The transport reads and buffers the body (up to 32 MB) before your handler runs, so `content-length` is not available inside the handler — multipart uploads use `formData()` and enforce their own policy from the parsed fields and each file's `size`. `security.bodyLimitBytes` applies to RPC calls only; the transport's 32 MB cap and `413` are a safety net, not a policy.
 
 A response body can be a `ReadableStream`; the server pipes it to the socket instead of buffering it:
 

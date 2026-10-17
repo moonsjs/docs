@@ -56,7 +56,7 @@ export default defineConfig({
 
 `security.trustProxy` makes the request URL follow `x-forwarded-proto` and `x-forwarded-host`, and makes `getClientIp()` read the first `x-forwarded-for` entry. Enable it only when every request passes through a proxy that overwrites those headers; with the default `false`, forwarded headers are ignored and cannot be spoofed. Either way the server overwrites its internal client-IP header (`CLIENT_IP_HEADER`), so `getClientIp` is safe as a rate-limit key ([Authentication](/guides/authentication)).
 
-`security.bodyLimitBytes` caps RPC bodies (default 1,000,000 bytes). The transport also stops reading any request body above 32 MB; raw API handlers are not covered by the config value, so give uploads their own limit ([API Routes](/guides/api-routes)).
+`security.bodyLimitBytes` caps RPC bodies (default 1,000,000 bytes). The transport also stops reading any request body above 32 MB; raw API handlers are not covered by the config value, and the body is buffered before the handler runs, so uploads enforce their own limit from the parsed fields ([API Routes](/guides/api-routes)). `requestTimeoutMs` (default 30 seconds) bounds how long a handler may take before the transport answers `504`; set it to `0` only when you accept unbounded requests.
 
 ## Static hosting
 
