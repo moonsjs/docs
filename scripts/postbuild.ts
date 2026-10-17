@@ -1,32 +1,52 @@
 #!/usr/bin/env bun
-// Postbuild docs:
-// 1) Pagefind mengindeks seluruh HTML statis hasil prerender;
-// 2) `dist/` disusun ulang menjadi tree statis siap deploy — Cloudflare Pages
-//    memakai output `dist` tanpa perubahan setelan.
-import { existsSync, renameSync, rmSync } from "node:fs";
+// Postbuild: sitemap + llms.txt for the static export. The deploy points at
+// `dist/client` (see wrangler.jsonc); `dist/server` stays intact for
+// `moons start`.
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const repoRoot = resolve(import.meta.dir, "..");
 const clientDir = join(repoRoot, "dist", "client");
+const generated = join(repoRoot, "src", "generated", "content.json");
 
 if (!existsSync(join(clientDir, "index.html"))) {
-  throw new Error("[docs] dist/client/index.html tidak ada — jalankan `moons build` dulu");
+  throw new Error("[docs] dist/client/index.html missing — run `moons build` first");
+}
+if (!existsSync(generated)) {
+  throw new Error("[docs] src/generated/content.json missing — run `bun run content` first");
 }
 
-const pagefind = join(repoRoot, "node_modules", ".bin", "pagefind");
-const result = Bun.spawnSync([pagefind, "--site", "dist/client"], {
-  cwd: repoRoot,
-  stdout: "inherit",
-  stderr: "inherit",
-});
-if (result.exitCode !== 0) {
-  throw new Error(`[docs] pagefind gagal (exit ${result.exitCode})`);
-}
+const SITE = "https://docs.devmoon.net";
+const content = JSON.parse(readFileSync(generated, "utf8")) as {
+  pages: Record<string, { title: string; description: string }>;
+};
+const urls = ["/", ...Object.keys(content.pages).map((slug) => `/${slug}`)];
 
-const staging = join(repoRoot, "dist-static");
-rmSync(staging, { recursive: true, force: true });
-renameSync(clientDir, staging);
-rmSync(join(repoRoot, "dist"), { recursive: true, force: true });
-renameSync(staging, join(repoRoot, "dist"));
+const sitemap = [
+  '<?xml version="1.0" encoding="UTF-8"?>',
+  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+  ...urls.map((url) => `  <url><loc>${SITE}${url}</loc></url>`),
+  "</urlset>",
+  "",
+].join("\n");
+writeFileSync(join(clientDir, "sitemap.xml"), sitemap);
 
-console.log("OK postbuild (pagefind + dist = static tree)");
+const llms = [
+  "# Moons",
+  "",
+  "> Full-stack TypeScript framework with a build-time zero-trust boundary:",
+  "> server-only modules become typed RPC stubs, and leaking server code fails the build.",
+  "",
+  "## Documentation",
+  "",
+  ...urls.map((url) => {
+    const page = content.pages[url.slice(1)];
+    return page === undefined
+      ? `- [Moons](${SITE}/)`
+      : `- [${page.title}](${SITE}${url}): ${page.description}`;
+  }),
+  "",
+].join("\n");
+writeFileSync(join(clientDir, "llms.txt"), llms);
+
+console.log(`[docs] postbuild: sitemap.xml + llms.txt (${urls.length} URLs)`);

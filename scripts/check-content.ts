@@ -1,39 +1,42 @@
 #!/usr/bin/env bun
-// Guard dokumen publik:
-// 1) rujukan internal (PRD/§/Addendum) dilarang di dokumentasi publik;
-// 2) tautan cookbook (URL GitHub absolut) diverifikasi terhadap clone
-//    cookbook (`moonsjs/cookbook`) bila ada (CI selalu meng-clone).
-import { existsSync, readFileSync } from "node:fs";
+// Public docs guard: internal references are forbidden in public docs, and
+// every absolute internal link must point at a rendered page.
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
 const repoRoot = resolve(import.meta.dir, "..");
-const COOKBOOK_BASE = "https://github.com/moonsjs/cookbook/blob/main/";
-const cookbookDir = process.env["COOKBOOK_DIR"] ?? join(repoRoot, "..", "moons-cookbook");
-
-const files: string[] = [
-  join(repoRoot, "llms.txt"),
-  join(repoRoot, "manifest.md"),
-  join(repoRoot, "id", "manifest.md"),
-];
-for (const pattern of [
-  "site/**/*.md",
-  "id/**/*.md",
-  "ai/**/*.md",
-  "api/**/*.md",
-  "migration/**/*.md",
-]) {
-  const glob = new Bun.Glob(pattern);
-  for (const rel of await Array.fromAsync(glob.scan({ cwd: repoRoot }))) {
-    files.push(join(repoRoot, rel));
-  }
-}
+const contentDir = join(repoRoot, "content");
+const generated = join(repoRoot, "src", "generated", "content.json");
 
 const FORBIDDEN =
-  /§[0-9]|PRD\b|Addendum [A-E]|\bdocs\/(decisions|milestones|site|site-en)\b|\.\.\/decisions\/\d|\bscripts\/(m\d|ai|cookbook)\b|\bexamples\/(basic|m2-leak|m8|m9-static|demo)\b|\bpackages\/[a-z-]+\/|\bStarlight\b/u;
-const LINK_PATTERN = /\[[^\]]*\]\(([^)]+)\)/g;
-const failures: string[] = [];
-let cookbookChecked = 0;
+  /§\d|\bPRD\b|Addendum\b|\bdecision \d{3,4}\b|\bdocs\/ai\b|\bquality\/|\bagent context\b|\bdefinition of done\b|Starlight/u;
 
+const files: string[] = [];
+function walk(dir: string): void {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      walk(full);
+    } else if (entry.name.endsWith(".md")) {
+      files.push(full);
+    }
+  }
+}
+walk(contentDir);
+
+if (!existsSync(generated)) {
+  console.error("[docs] src/generated/content.json missing — run `bun run content` first");
+  process.exit(1);
+}
+const content = JSON.parse(readFileSync(generated, "utf8")) as {
+  pages: Record<string, { title: string }>;
+};
+const valid = new Set<string>(["/"]);
+for (const slug of Object.keys(content.pages)) {
+  valid.add(`/${slug}`);
+}
+
+const failures: string[] = [];
 for (const file of files) {
   const source = readFileSync(file, "utf8");
   source.split("\n").forEach((line, index) => {
@@ -41,18 +44,11 @@ for (const file of files) {
       failures.push(`${relative(repoRoot, file)}:${index + 1}: ${line.trim()}`);
     }
   });
-  for (const match of source.matchAll(LINK_PATTERN)) {
-    const raw = (match[1] ?? "").trim();
-    if (!raw.startsWith(COOKBOOK_BASE)) {
-      continue;
-    }
-    const target = (raw.split("#")[0] ?? "").slice(COOKBOOK_BASE.length);
-    if (target.length === 0) {
-      continue;
-    }
-    cookbookChecked += 1;
-    if (existsSync(cookbookDir) && !existsSync(join(cookbookDir, target))) {
-      failures.push(`${relative(repoRoot, file)} → ${raw} (tidak ada di cookbook)`);
+  for (const match of source.matchAll(/\]\((\/[^)#\s]*)[^)]*\)/g)) {
+    const raw = match[1] ?? "";
+    const url = raw.replace(/\/+$/, "") || "/";
+    if (!valid.has(url)) {
+      failures.push(`${relative(repoRoot, file)} → ${url} (no such page)`);
     }
   }
 }
@@ -65,6 +61,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(
-  `OK check-content (${files.length} file · ${cookbookChecked} tautan cookbook${existsSync(cookbookDir) ? "" : " — clone cookbook tak ada, hanya dicek polanya"})`,
-);
+console.log(`OK check-content (${files.length} files · ${valid.size} pages)`);

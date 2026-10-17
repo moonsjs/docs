@@ -1,10 +1,11 @@
-// Deploy statis (Cloudflare Workers static assets). Tanpa ini, `wrangler deploy`
-// menjalankan auto-config yang mengubah proyek menjadi Workers+adapter Astro.
+// Static deploy (Cloudflare Workers static assets). The build emits
+// `dist/client` (static export, including 404.html) and `dist/server`
+// (used by `moons start`).
 {
   "name": "docs",
   "compatibility_date": "2026-10-15",
   "assets": {
-    "directory": "./dist",
+    "directory": "./dist/client",
     "not_found_handling": "404-page"
   }
 }

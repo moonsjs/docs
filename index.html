@@ -3,60 +3,22 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Moons</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Moons — Documentation</title>
     <script>
-      // Tema sebelum paint (hindari flash). Interaksi lanjutan via delegasi.
+      // Apply the stored theme before first paint to avoid a flash.
       (function () {
         try {
-          var stored = localStorage.getItem("moons-theme");
+          var stored = localStorage.getItem("moons-docs-theme");
           var dark =
             stored === "dark" ||
-            (stored === null && window.matchMedia("(prefers-color-scheme: dark)").matches);
-          if (dark) document.documentElement.dataset.theme = "dark";
+            (stored !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.classList.toggle("dark", dark);
         } catch (error) {}
       })();
-
-      document.addEventListener("click", function (event) {
-        var target = event.target;
-        if (!(target instanceof Element)) return;
-
-        var themeButton = target.closest("[data-theme-toggle]");
-        if (themeButton !== null) {
-          var root = document.documentElement;
-          var next = root.dataset.theme === "dark" ? "light" : "dark";
-          if (next === "dark") root.dataset.theme = "dark";
-          else delete root.dataset.theme;
-          try {
-            localStorage.setItem("moons-theme", next);
-          } catch (error) {}
-          return;
-        }
-
-        var copyButton = target.closest("[data-code-copy]");
-        if (copyButton !== null) {
-          var block = copyButton.closest(".code-block");
-          var code = block === null ? null : block.querySelector("pre code");
-          if (code !== null) {
-            navigator.clipboard.writeText(code.textContent || "").then(function () {
-              copyButton.textContent = "Copied";
-              setTimeout(function () {
-                copyButton.textContent = "Copy";
-              }, 1400);
-            });
-          }
-          return;
-        }
-
-        var navButton = target.closest("[data-nav-toggle]");
-        if (navButton !== null) {
-          var shell = navButton.closest(".docs-shell");
-          if (shell !== null) shell.classList.toggle("nav-open");
-        }
-      });
     </script>
   </head>
-  <body>
+  <body class="bg-background text-foreground antialiased">
     <div id="root"></div>
     <script type="module" src="/src/client/main.tsx"></script>
   </body>

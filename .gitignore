@@ -3,8 +3,6 @@ dist
 dist-static
 .moons
 src/generated
-public/raw
-public/llms.txt
-public/llms-full.txt
-public/_redirects
+.lighthouseci
+/C:*
 *.log
