@@ -65,7 +65,7 @@ wrangler deploy
 
 ```
 content/                    markdown pages (frontmatter: title, description, planned)
-scripts/prepare-content.ts  markdown → JSON pipeline (marked + shiki + magic-move tokens)
+scripts/prepare-content.ts  markdown → JSON pipeline (marked + shiki + magic-move tokens + llms.txt)
 scripts/check-content.ts    public-content guard (internal references + broken links)
 scripts/postbuild.ts        sitemap.xml + llms.txt
 scripts/smoke.ts            end-to-end checks against dist/ (Playwright + axe)
@@ -75,8 +75,8 @@ src/components/             layout + chrome (header, sidebar, table of contents,
 src/components/ui/          shadcn/ui components
 src/lib/showcase-code.ts    landing code snippets shared by the pipeline and the page
 src/styles/global.css       Tailwind v4 theme + documentation typography
-ai/                         AI context snapshot bundled into the CLI (not built into the site)
-llms.txt                    source snapshot for the CLI bundle (the served copy is generated)
+ai/                         AI context pack bundled into the CLI (not built into the site)
+llms.txt                    generated from content/ by prepare-content; shipped in the CLI bundle
 ```
 
 ## Writing documentation
